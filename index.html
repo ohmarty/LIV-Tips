@@ -1,0 +1,3911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LIV Tips">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>LIV Tips - The Made Guys</title>
+
+  <!-- PWA Icons -->
+  <link rel="apple-touch-icon" href="logo.jpg">
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body, #root {
+      height: 100%;
+    }
+    
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0a0a0f;
+      color: #ffffff;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #0a0a0f;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #2a2a3a;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3a3a4a;
+    }
+    
+    /* Input focus states */
+    input:focus, select:focus {
+      border-color: #8b5cf6 !important;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important;
+    }
+    
+    /* Button hover states */
+    button:hover {
+      transform: translateY(-1px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    /* Select styling for mobile */
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888899' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px !important;
+    }
+    
+    /* Prevent zoom on input focus for iOS */
+    @media screen and (max-width: 768px) {
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
+    window.APP_VERSION = 1785883153627; // Auto-replaced by Netlify build on every deploy
+    console.log('🚀 LIV Tips v' + window.APP_VERSION + ' loaded at', new Date().toISOString());
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteField, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA6B6fu3BC48ibFV4OfRrksyswSUpDc2FE",
+      authDomain: "liv-ec4ab.firebaseapp.com",
+      projectId: "liv-ec4ab",
+      storageBucket: "liv-ec4ab.firebasestorage.app",
+      messagingSenderId: "440666383879",
+      appId: "1:440666383879:web:37131b8f1386b2f9d1aca2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Make Firebase available globally
+    window.firebaseDb = db;
+    window.firestoreDoc = doc;
+    window.firestoreGetDoc = getDoc;
+    window.firestoreGetDocFromServer = getDocFromServer;
+    window.firestoreSetDoc = setDoc;
+    window.firestoreDeleteField = deleteField;
+    window.firestoreOnSnapshot = onSnapshot;
+    window.firestoreRunTransaction = runTransaction;
+  </script>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+  <script src="logger.js"></script>
+
+  <script type="text/babel" data-type="module">
+    // ============================================
+    // LIV TIPS APP - The Made Guys
+    // ============================================
+
+    const { useState, useEffect } = React;
+
+    // Track all clicks globally
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      const tagName = target.tagName;
+      const text = target.textContent?.substring(0, 50);
+      const id = target.id;
+      const className = target.className;
+
+      logger.log('debug', '🖱️ Click event', {
+        tagName,
+        text,
+        id,
+        className: typeof className === 'string' ? className : 'styled-component'
+      });
+    });
+
+    // Employee Directory
+    const EMPLOYEES = [
+      { name: "Arias, JT", id: "10155" },
+      { name: "Bolano, Milton", id: "9545" },
+      { name: "Burns, Michael", id: "14596" },
+      { name: "Exposito, Jorge", id: "8506" },
+      { name: "Garcia, Amaury", id: "7761" },
+      { name: "Garcia, Ignacio", id: "87424" },
+      { name: "Iglesia, Martin", id: "14978" },
+      { name: "Jean Jacques, Jeff", id: "41826" },
+      { name: "Kolonais, Anthony", id: "9954" },
+      { name: "Marsh, Travis", id: "12791" },
+      { name: "Monslave, Jean", id: "42801" },
+      { name: "Owens, Michael", id: "12724" },
+      { name: "Owens, Michael J", id: "44813" },
+      { name: "Pagan, Kevin", id: "88133" },
+      { name: "Paniague, Paul", id: "7950" },
+      { name: "Pantovic, Marko", id: "14118" },
+      { name: "Pecora, Vincent", id: "11931" },
+      { name: "Petit-Maite, Jude", id: "8621" },
+      { name: "Ragston, Devaughn", id: "68389" },
+      { name: "Rodes, Alfred", id: "15070" },
+      { name: "Saint-Fleur, Stevenson", id: "21033" },
+      { name: "Sandovete, Rodrigo", id: "9153" },
+      { name: "Sheenan, Michael", id: "14595" },
+      { name: "Solomon, Fredson", id: "14597" },
+      { name: "Valdez, Juan", id: "6845" },
+      { name: "Wilson, Michael", id: "22381" }
+    ];
+
+    // ============================================
+    // SUPERVISORS
+    // Paid busser tips/hr × 1.20 × their hours. NEVER part of the tip pool.
+    // Identified by employee ID. Names must match employeeList entries exactly.
+    // Default in-time 9:30 PM; a banquet selection overrides the in-time.
+    // ============================================
+    const SUPERVISORS = [
+      { name: "Exposito, Jorge", id: "8506" },
+      { name: "Petit-Maite, Jude", id: "8621" },
+      { name: "Sandovete, Rodrigo", id: "9153" }
+    ];
+    const SUPERVISOR_IDS = SUPERVISORS.map(s => s.id);
+    const SUPERVISOR_NAMES = SUPERVISORS.map(s => s.name);
+    const SUPERVISOR_DEFAULT_START = '9:30 PM'; // (no longer used — supervisors self-enter in-time; kept for reference)
+    const SUPERVISOR_MULTIPLIER = 1.20;
+
+    // Pay period anchor: 01/09/2026 (bi-weekly)
+    const PAY_PERIOD_ANCHOR = new Date(2026, 0, 9); // Jan 9, 2026
+    const PAY_PERIOD_DAYS = 14;
+
+    // Helper: Get pay period for a given date
+    function getPayPeriod(date) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      const anchor = new Date(PAY_PERIOD_ANCHOR);
+      anchor.setHours(0, 0, 0, 0);
+      
+      const diffTime = d.getTime() - anchor.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const periodIndex = Math.floor(diffDays / PAY_PERIOD_DAYS);
+      
+      const startDate = new Date(anchor);
+      startDate.setDate(anchor.getDate() + (periodIndex * PAY_PERIOD_DAYS));
+      
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + PAY_PERIOD_DAYS - 1);
+      
+      return { startDate, endDate, periodIndex };
+    }
+
+    // Helper: Get all dates in a pay period
+    function getDatesInPeriod(startDate, endDate) {
+      const dates = [];
+      const current = new Date(startDate);
+      while (current <= endDate) {
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    }
+
+    // Helper: Format date
+    function formatDate(date, style = 'short') {
+      if (style === 'short') {
+        return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
+      }
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Helper: Format date as key (using local timezone, not UTC)
+    function dateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Helper: Get business day (for overnight shifts)
+    // If it's before 6 PM, the business day is yesterday
+    // If it's 6 PM or later, the business day is today
+    function getBusinessDay() {
+      const now = new Date();
+      const hours = now.getHours();
+
+      // If it's before 6 PM (18:00), subtract one day
+      if (hours < 18) {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return yesterday;
+      }
+
+      return now;
+    }
+
+    // Helper: Parse time string to minutes since midnight
+    function parseTime(timeStr) {
+      if (!timeStr) return null;
+      const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!match) return null;
+      let [_, hours, minutes, period] = match;
+      hours = parseInt(hours);
+      minutes = parseInt(minutes);
+      if (period.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+      if (period.toUpperCase() === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+
+    // Helper: Calculate hours between start and end (handles overnight)
+    function calculateHours(startTime, endTime) {
+      let start = parseTime(startTime);
+      let end = parseTime(endTime);
+      if (start === null || end === null) return 0;
+      
+      // If end is before start, it's overnight (add 24 hours)
+      if (end < start) {
+        end += 24 * 60;
+      }
+      return (end - start) / 60;
+    }
+
+    // Helper: Format hours to hours and minutes
+    function formatHours(hours) {
+      const h = Math.floor(hours);
+      const m = Math.round((hours - h) * 60);
+      return `${h}h ${m}m`;
+    }
+
+    // ============================================
+    // SHIFT POOL MATH — single source of truth
+    // Pool hours =
+    //   admin 10PM count × (10PM → close)
+    // + admin 12AM count × (12AM → close)
+    // + banquet workers (EXCLUDING supervisors): banquet-in → their cut or close
+    // + extra bussers (admin-entered in-times): in → their cut or close
+    // ± admin-set early cuts for the 10/12 crews
+    // ± legacy self-set custom starts (old records only; new UI can't create them)
+    // Supervisors are NEVER in the pool. Their pay = perHour × 1.20 × their hours.
+    // ============================================
+    function computeShiftPool(shift, employeeData, key) {
+      if (!shift || !shift.totalTips || !shift.endTime) return null;
+
+      let countB10 = shift.bussers10Count || 0;
+      let countB12 = shift.bussers12Count || 0;
+
+      const banquetWorkers = (shift.banquetEmployees || []).filter(n => !SUPERVISOR_NAMES.includes(n));
+      const banquetInTime = shift.banquetInTime || '';
+      const extraBussers = shift.extraBussers || [];
+      const extraNames = extraBussers.map(e => e && e.name);
+
+      let customHoursAdded = 0;
+      const adjustments = [];
+
+      // Per-employee adjustments from self/admin entries.
+      // NOTE: supervisor NAMES are intentionally NOT skipped here — in the new build
+      // supervisors can never create entries in this loop (they get a read-only
+      // dashboard, and banquet/extras/cut flows flag or filter them), so the only
+      // supervisor entries that exist are LEGACY busser nights that were paid as
+      // bussers and must keep displaying exactly as paid.
+      Object.keys(employeeData || {}).forEach(empName => {
+        // Admin-entered extras are counted from the shift record instead
+        if (extraNames.includes(empName)) return;
+
+        const empDayData = employeeData[empName] && employeeData[empName][key];
+        if (!empDayData || !empDayData.savedAt) return;
+        if (empDayData.isBanquetWorker) return;
+        if (empDayData.isExtraBusser) return;
+
+        const hasCustomStart = empDayData.startTimeOverride && empDayData.startTimeOverride.trim() !== '';
+        const hasPreset = empDayData.startTime;
+        const hasCustomEnd = empDayData.endTimeOverride && empDayData.endTimeOverride.trim() !== '';
+
+        let actualStart;
+        const usedOverrideStart = hasCustomStart && (!hasPreset ||
+          (empDayData.startTimeOverride_timestamp || 0) > (empDayData.startTime_timestamp || 0));
+
+        if (usedOverrideStart) {
+          actualStart = empDayData.startTimeOverride; // LEGACY records only
+        } else if (hasPreset) {
+          if (empDayData.startTime === '10') actualStart = '10:00 PM';
+          else if (empDayData.startTime === '12') actualStart = '12:00 AM';
+        }
+        if (!actualStart) return;
+
+        const actualEnd = hasCustomEnd ? empDayData.endTimeOverride : shift.endTime;
+        const actualHours = calculateHours(actualStart, actualEnd);
+
+        if (usedOverrideStart) {
+          // LEGACY behavior preserved exactly for old data (incl. the default-to-12 guess)
+          if (empDayData.startTime === '10') countB10--;
+          else countB12--;
+          customHoursAdded += actualHours;
+          adjustments.push({ name: empName, type: 'custom (legacy)', hours: actualHours.toFixed(2) });
+        } else if (hasCustomEnd) {
+          // Admin-set early cut for a 10/12 crew member: subtract the missed hours
+          const baselineHours = calculateHours(actualStart, shift.endTime);
+          const diff = actualHours - baselineHours;
+          customHoursAdded += diff;
+          adjustments.push({ name: empName, type: 'cut early', diff: diff.toFixed(2) });
+        }
+      });
+
+      // Banquet workers (supervisors already excluded)
+      let banquetHours = 0;
+      banquetWorkers.forEach(empName => {
+        const empDayData = employeeData[empName] && employeeData[empName][key];
+        let banquetEnd = shift.endTime;
+        if (empDayData && empDayData.endTimeOverride && empDayData.endTimeOverride.trim() !== '') {
+          banquetEnd = empDayData.endTimeOverride;
+        }
+        const hours = calculateHours(banquetInTime, banquetEnd);
+        banquetHours += hours;
+        adjustments.push({ name: empName, type: 'banquet', hours: hours.toFixed(2) });
+      });
+
+      // Extra bussers: admin-entered custom in-times, purely additive
+      let extraHours = 0;
+      extraBussers.forEach(entry => {
+        if (!entry || !entry.name || !entry.inTime) return;
+        const empDayData = employeeData[entry.name] && employeeData[entry.name][key];
+        let extraEnd = shift.endTime;
+        if (empDayData && empDayData.endTimeOverride && empDayData.endTimeOverride.trim() !== '') {
+          extraEnd = empDayData.endTimeOverride;
+        }
+        const hours = calculateHours(entry.inTime, extraEnd);
+        extraHours += hours;
+        adjustments.push({ name: entry.name, type: 'extra', hours: hours.toFixed(2) });
+      });
+
+      const b10Hours = countB10 * calculateHours('10:00 PM', shift.endTime);
+      const b12Hours = countB12 * calculateHours('12:00 AM', shift.endTime);
+      const totalStaffHours = b10Hours + b12Hours + banquetHours + extraHours + customHoursAdded;
+
+      if (totalStaffHours <= 0) return null;
+
+      const perHour = shift.totalTips / totalStaffHours;
+      return { perHour, totalStaffHours, tipPool: shift.totalTips, adjustments };
+    }
+
+    // Supervisor pay for one shift, or null if they didn't work / shift incomplete.
+    function computeSupervisorShift(shift, employeeData, key, supervisorId, supervisorName) {
+      if (!shift || !shift.totalTips || !shift.endTime) return null;
+      const worked = (shift.supervisorsWorked || []).includes(supervisorId);
+      if (!worked) return null;
+
+      const pool = computeShiftPool(shift, employeeData, key);
+      if (!pool) return null;
+
+      const rate = pool.perHour * SUPERVISOR_MULTIPLIER;
+
+      // BOTH in-time and out-time are SELF-ENTERED by the supervisor on their own
+      // dashboard. Neither ever falls back to an admin/default time — no assumption
+      // about when they arrived or left. Missing either one → pending (pay not computed).
+      const supRecord = (employeeData && employeeData[supervisorName] && employeeData[supervisorName][key]) || {};
+      const inTime = (supRecord.supervisorClockIn && supRecord.supervisorClockIn.trim() !== '')
+        ? supRecord.supervisorClockIn : null;
+      const outTime = (supRecord.supervisorClockOut && supRecord.supervisorClockOut.trim() !== '')
+        ? supRecord.supervisorClockOut : null;
+
+      if (!inTime || !outTime) {
+        return { inTime, outTime, hours: 0, rate, amount: 0, busserRate: pool.perHour, pending: true };
+      }
+
+      const hours = calculateHours(inTime, outTime);
+      return { inTime, outTime, hours, rate, amount: rate * hours, busserRate: pool.perHour, pending: false };
+    }
+
+    // Firebase Storage helpers
+    async function loadData(key) {
+      try {
+        const docRef = window.firestoreDoc(window.firebaseDb, 'appData', key);
+        const docSnap = await window.firestoreGetDoc(docRef);
+        if (docSnap.exists()) {
+          return docSnap.data().value || {};
+        }
+        return {};
+      } catch (error) {
+        console.error('Error loading data:', error);
+        return {};
+      }
+    }
+
+    async function saveData(key, data) {
+      try {
+        // SAFEGUARD 1: Don't save if data hasn't been loaded from Firebase yet
+        if (window.dataLoaded && !window.dataLoaded[key]) {
+          console.warn(`⚠️ Blocked save for ${key} - data not yet loaded from Firebase`);
+          return;
+        }
+
+        // SAFEGUARD 2: Never save empty objects for shiftData or employeeData
+        // This prevents accidental data wipes
+        if ((key === 'shiftData' || key === 'employeeData') && typeof data === 'object') {
+          const keys = Object.keys(data);
+          if (keys.length === 0) {
+            console.error(`🚫 BLOCKED: Attempted to save empty ${key}! This would erase all data.`);
+            return;
+          }
+        }
+
+        if (key === 'employeeList') {
+          console.log(`💾 [employeeList] Saving ${Array.isArray(data) ? data.length : '?'} employees at ${new Date().toISOString()}:`, data.map(e => e.name));
+          console.trace('💾 [employeeList] Save triggered from:');
+        } else {
+          console.log(`💾 Saving ${key}:`, JSON.stringify(data).substring(0, 200) + '...');
+        }
+
+        const docRef = window.firestoreDoc(window.firebaseDb, 'appData', key);
+        await window.firestoreSetDoc(docRef, { value: data }, { merge: true });
+      } catch (error) {
+        console.error('Error saving data:', error);
+      }
+    }
+
+    // ============================================
+    // STYLES
+    // ============================================
+    const styles = {
+      // Layout
+      container: {
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%)',
+        color: '#ffffff',
+        fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif",
+      },
+
+      // Header
+      header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '20px 24px',
+        borderBottom: '1px solid #2a2a3a',
+        background: 'rgba(18, 18, 26, 0.95)',
+        backdropFilter: 'blur(10px)',
+        flexShrink: 0,
+        zIndex: 100,
+      },
+      headerTitle: {
+        margin: 0,
+        fontSize: '24px',
+        fontWeight: '700',
+        background: 'linear-gradient(135deg, #8b5cf6, #06ffa5)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+      },
+      headerSubtitle: {
+        margin: '4px 0 0',
+        fontSize: '14px',
+        color: '#888899',
+      },
+
+      // Content
+      content: {
+        padding: '24px',
+        maxWidth: '600px',
+        margin: '0 auto',
+      },
+
+      // Login
+      loginContainer: {
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%)',
+      },
+      loginCard: {
+        width: '100%',
+        maxWidth: '400px',
+        background: '#12121a',
+        borderRadius: '24px',
+        padding: '40px 32px',
+        border: '1px solid #2a2a3a',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+      },
+      logoContainer: {
+        textAlign: 'center',
+        marginBottom: '32px',
+      },
+      logo: {
+        fontSize: '48px',
+        marginBottom: '16px',
+      },
+      appTitle: {
+        margin: 0,
+        fontSize: '32px',
+        fontWeight: '700',
+        background: 'linear-gradient(135deg, #8b5cf6, #06ffa5)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+      },
+      appSubtitle: {
+        margin: '8px 0 0',
+        fontSize: '14px',
+        color: '#888899',
+        letterSpacing: '2px',
+        textTransform: 'uppercase',
+      },
+
+      // Forms
+      form: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+      },
+      inputGroup: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+      },
+      label: {
+        fontSize: '14px',
+        fontWeight: '500',
+        color: '#888899',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+      },
+      input: {
+        padding: '14px 16px',
+        fontSize: '16px',
+        background: '#1a1a25',
+        border: '1px solid #2a2a3a',
+        borderRadius: '12px',
+        color: '#ffffff',
+        outline: 'none',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
+      },
+      select: {
+        padding: '14px 16px',
+        fontSize: '16px',
+        background: '#1a1a25',
+        border: '1px solid #2a2a3a',
+        borderRadius: '12px',
+        color: '#ffffff',
+        outline: 'none',
+        cursor: 'pointer',
+      },
+      timeInputGroup: {
+        display: 'flex',
+        gap: '8px',
+      },
+
+      // Buttons
+      primaryBtn: {
+        padding: '16px 24px',
+        fontSize: '16px',
+        fontWeight: '600',
+        background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+        border: 'none',
+        borderRadius: '12px',
+        color: '#ffffff',
+        cursor: 'pointer',
+        transition: 'transform 0.2s, box-shadow 0.2s, opacity 0.2s',
+      },
+      primaryBtnDisabled: {
+        opacity: 0.5,
+        cursor: 'not-allowed',
+      },
+      secondaryBtn: {
+        padding: '16px 24px',
+        fontSize: '16px',
+        fontWeight: '600',
+        background: 'transparent',
+        border: '1px solid #2a2a3a',
+        borderRadius: '12px',
+        color: '#888899',
+        cursor: 'pointer',
+      },
+      linkBtn: {
+        marginTop: '16px',
+        padding: '12px',
+        fontSize: '14px',
+        background: 'transparent',
+        border: 'none',
+        color: '#8b5cf6',
+        cursor: 'pointer',
+        textDecoration: 'underline',
+      },
+      logoutBtn: {
+        padding: '10px 20px',
+        fontSize: '14px',
+        fontWeight: '500',
+        background: 'rgba(255, 107, 107, 0.1)',
+        border: '1px solid rgba(255, 107, 107, 0.3)',
+        borderRadius: '8px',
+        color: '#ff6b6b',
+        cursor: 'pointer',
+      },
+      addShiftBtn: {
+        padding: '10px 24px',
+        fontSize: '14px',
+        fontWeight: '600',
+        background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+        border: 'none',
+        borderRadius: '8px',
+        color: '#ffffff',
+        cursor: 'pointer',
+      },
+      modal: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '20px',
+      },
+      modalContent: {
+        background: '#1a1a25',
+        borderRadius: '16px',
+        padding: '32px',
+        maxWidth: '500px',
+        width: '100%',
+        border: '1px solid #2a2a3a',
+      },
+      modalTitle: {
+        fontSize: '24px',
+        fontWeight: '700',
+        marginBottom: '24px',
+        color: '#ffffff',
+      },
+      modalSection: {
+        marginBottom: '24px',
+      },
+      modalLabel: {
+        display: 'block',
+        fontSize: '14px',
+        fontWeight: '600',
+        marginBottom: '12px',
+        color: '#ffffff',
+      },
+      radioGroup: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      },
+      radioLabel: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '14px',
+        color: '#ffffff',
+        cursor: 'pointer',
+      },
+      adminLink: {
+        marginTop: '24px',
+        textAlign: 'center',
+        paddingTop: '24px',
+        borderTop: '1px solid #2a2a3a',
+      },
+      adminLinkText: {
+        fontSize: '14px',
+        color: '#888899',
+        textDecoration: 'none',
+        cursor: 'pointer',
+      },
+
+      // Error
+      error: {
+        margin: 0,
+        padding: '12px 16px',
+        fontSize: '14px',
+        background: 'rgba(255, 107, 107, 0.1)',
+        border: '1px solid rgba(255, 107, 107, 0.3)',
+        borderRadius: '8px',
+        color: '#ff6b6b',
+      },
+
+      // Cards
+      card: {
+        background: '#12121a',
+        borderRadius: '20px',
+        padding: '24px',
+        border: '1px solid #2a2a3a',
+        marginBottom: '20px',
+      },
+      cardTitle: {
+        margin: '0 0 24px',
+        fontSize: '20px',
+        fontWeight: '600',
+      },
+      subTitle: {
+        margin: '0 0 16px',
+        fontSize: '16px',
+        fontWeight: '500',
+        color: '#888899',
+      },
+      divider: {
+        height: '1px',
+        background: '#2a2a3a',
+        margin: '24px 0',
+      },
+
+      // Admin specific
+      countGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '12px',
+        marginBottom: '24px',
+      },
+      countItem: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        minWidth: 0,
+      },
+      countLabel: {
+        fontSize: '11px',
+        color: '#888899',
+        textAlign: 'center',
+        lineHeight: '1.3',
+        wordBreak: 'break-word',
+      },
+      countInput: {
+        padding: '12px 8px',
+        fontSize: '20px',
+        fontWeight: '600',
+        textAlign: 'center',
+        background: '#1a1a25',
+        border: '1px solid #2a2a3a',
+        borderRadius: '12px',
+        color: '#ffffff',
+        outline: 'none',
+        width: '100%',
+        boxSizing: 'border-box',
+      },
+      preview: {
+        background: '#1a1a25',
+        borderRadius: '12px',
+        padding: '16px',
+        marginBottom: '24px',
+      },
+      previewItem: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 0',
+      },
+      previewLabel: {
+        fontSize: '14px',
+        color: '#888899',
+      },
+      previewValue: {
+        fontSize: '16px',
+        fontWeight: '600',
+      },
+      previewValueHighlight: {
+        fontSize: '18px',
+        fontWeight: '700',
+        color: '#06ffa5',
+      },
+      entriesList: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+      },
+      entryItem: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '12px 16px',
+        background: '#1a1a25',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        transition: 'background 0.2s',
+        position: 'relative',
+      },
+      entryItemHover: {
+        background: '#252530',
+      },
+      deleteBtn: {
+        padding: '6px 12px',
+        fontSize: '12px',
+        fontWeight: '500',
+        background: 'rgba(255, 107, 107, 0.1)',
+        border: '1px solid rgba(255, 107, 107, 0.3)',
+        borderRadius: '6px',
+        color: '#ff6b6b',
+        cursor: 'pointer',
+        opacity: 0,
+        transition: 'opacity 0.2s',
+        marginLeft: '12px',
+      },
+      saveConfirmation: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginLeft: '12px',
+        color: '#06ffa5',
+        fontSize: '14px',
+        fontWeight: '600',
+        opacity: 1,
+        transition: 'opacity 0.3s',
+      },
+      saveConfirmationFade: {
+        opacity: 0,
+      },
+      entryDate: {
+        fontSize: '14px',
+      },
+      entryTips: {
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#06ffa5',
+      },
+      emptyText: {
+        textAlign: 'center',
+        color: '#888899',
+        padding: '24px',
+      },
+
+      // Employee Dashboard
+      periodCard: {
+        background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+        borderRadius: '20px',
+        padding: '20px',
+        marginBottom: '20px',
+        textAlign: 'center',
+      },
+      periodNav: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+      },
+      periodNavBtn: {
+        padding: '8px 12px',
+        fontSize: '13px',
+        fontWeight: '600',
+        background: 'rgba(255, 255, 255, 0.2)',
+        border: 'none',
+        borderRadius: '8px',
+        color: '#ffffff',
+        cursor: 'pointer',
+        transition: 'background 0.2s',
+        whiteSpace: 'nowrap',
+      },
+      periodInfo: {
+        flex: 1,
+        textAlign: 'center',
+      },
+      goToCurrentBtn: {
+        marginTop: '12px',
+        padding: '8px 16px',
+        fontSize: '12px',
+        fontWeight: '500',
+        background: 'rgba(255, 255, 255, 0.15)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        borderRadius: '6px',
+        color: '#ffffff',
+        cursor: 'pointer',
+      },
+      periodTitle: {
+        margin: '0 0 4px',
+        fontSize: '13px',
+        fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: '2px',
+        opacity: 0.9,
+      },
+      periodDates: {
+        margin: 0,
+        fontSize: '16px',
+        fontWeight: '600',
+      },
+
+      // Table
+      tableContainer: {
+        background: '#12121a',
+        borderRadius: '20px',
+        border: '1px solid #2a2a3a',
+        overflow: 'hidden',
+        marginBottom: '20px',
+      },
+      tableHeader: {
+        display: 'grid',
+        gridTemplateColumns: '70px 1fr 1fr 70px',
+        gap: '8px',
+        padding: '16px',
+        background: '#1a1a25',
+        fontSize: '11px',
+        fontWeight: '600',
+        color: '#888899',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+      },
+      tableRow: {
+        display: 'grid',
+        gridTemplateColumns: '60px minmax(110px, 1fr) minmax(110px, 1fr) 80px',
+        gap: '6px',
+        padding: '12px 8px',
+        borderBottom: '1px solid #2a2a3a',
+        alignItems: 'center',
+      },
+      tableRowMobile: {
+        display: 'grid',
+        gridTemplateColumns: '50px 1fr 1fr 70px',
+        gap: '4px',
+        padding: '10px 6px',
+        borderBottom: '1px solid #2a2a3a',
+        alignItems: 'center',
+      },
+      tableRowToday: {
+        background: 'rgba(139, 92, 246, 0.1)',
+      },
+      colDate: {
+        display: 'flex',
+        flexDirection: 'column',
+      },
+      colTime: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+      },
+      colTip: {
+        textAlign: 'right',
+      },
+      dateText: {
+        fontSize: '14px',
+        fontWeight: '600',
+      },
+      dayText: {
+        fontSize: '11px',
+        color: '#888899',
+      },
+      timeSelect: {
+        flex: 1,
+        padding: '8px 6px',
+        fontSize: '13px',
+        background: '#1a1a25',
+        border: '1px solid #2a2a3a',
+        borderRadius: '6px',
+        color: '#ffffff',
+        outline: 'none',
+        minWidth: 0,
+      },
+      timeSelectMobile: {
+        flex: 1,
+        padding: '6px 2px',
+        fontSize: '11px',
+        background: '#1a1a25',
+        border: '1px solid #2a2a3a',
+        borderRadius: '6px',
+        color: '#ffffff',
+        outline: 'none',
+        minWidth: 0,
+      },
+      timeInput: {
+        padding: '8px 6px',
+        fontSize: '13px',
+        background: '#1a1a25',
+        border: '1px solid #2a2a3a',
+        borderRadius: '6px',
+        color: '#ffffff',
+        outline: 'none',
+        width: '80px',
+        flexShrink: 0,
+      },
+      timeInputMobile: {
+        padding: '6px 4px',
+        fontSize: '9px',
+        background: '#1a1a25',
+        border: '1px solid #2a2a3a',
+        borderRadius: '6px',
+        color: '#ffffff',
+        outline: 'none',
+        width: '70px',
+        flexShrink: 0,
+      },
+      endTimeDisplay: {
+        flex: 1,
+        fontSize: '13px',
+        color: '#888899',
+      },
+      endTimeDisplayMobile: {
+        flex: 1,
+        fontSize: '9px',
+        color: '#888899',
+      },
+      overrideBtn: {
+        width: '26px',
+        height: '26px',
+        padding: 0,
+        fontSize: '11px',
+        background: 'transparent',
+        border: '1px solid #2a2a3a',
+        borderRadius: '6px',
+        color: '#888899',
+        cursor: 'pointer',
+        flexShrink: 0,
+      },
+      tipAmount: {
+        fontSize: '15px',
+        fontWeight: '700',
+        color: '#06ffa5',
+      },
+      tipEmpty: {
+        fontSize: '14px',
+        color: '#888899',
+      },
+
+      // Totals
+      totalsCard: {
+        background: '#12121a',
+        borderRadius: '20px',
+        padding: '20px 24px',
+        border: '1px solid #2a2a3a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+      },
+      totalItem: {
+        textAlign: 'center',
+      },
+      totalLabel: {
+        display: 'block',
+        fontSize: '12px',
+        color: '#888899',
+        textTransform: 'uppercase',
+        letterSpacing: '1px',
+        marginBottom: '8px',
+      },
+      totalValue: {
+        fontSize: '24px',
+        fontWeight: '700',
+      },
+      totalValueHighlight: {
+        fontSize: '28px',
+        fontWeight: '700',
+        color: '#06ffa5',
+      },
+      totalDivider: {
+        width: '1px',
+        height: '50px',
+        background: '#2a2a3a',
+      },
+
+      // Modal
+      modalOverlay: {
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        zIndex: 1000,
+      },
+      modalContent: {
+        width: '100%',
+        maxWidth: '400px',
+        background: '#12121a',
+        borderRadius: '20px',
+        padding: '32px',
+        border: '1px solid #2a2a3a',
+      },
+      modalTitle: {
+        margin: '0 0 24px',
+        fontSize: '24px',
+        fontWeight: '600',
+        textAlign: 'center',
+      },
+      modalButtons: {
+        display: 'flex',
+        gap: '12px',
+        marginTop: '24px',
+      },
+      hint: {
+        marginTop: '16px',
+        fontSize: '12px',
+        color: '#888899',
+        textAlign: 'center',
+      },
+
+      // Admin Navigation
+      adminLayout: {
+        display: 'flex',
+        minHeight: '100vh',
+      },
+      sidebar: {
+        display: 'none',
+      },
+      sidebarDesktop: {
+        width: '240px',
+        background: '#12121a',
+        borderRight: '1px solid #2a2a3a',
+        display: 'flex',
+        flexDirection: 'column',
+      },
+      sidebarHeader: {
+        padding: '20px',
+        borderBottom: '1px solid #2a2a3a',
+      },
+      sidebarTitle: {
+        margin: 0,
+        fontSize: '18px',
+        fontWeight: '700',
+        background: 'linear-gradient(135deg, #8b5cf6, #06ffa5)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+      },
+      nav: {
+        flex: 1,
+        padding: '20px 0',
+      },
+      navItem: {
+        padding: '12px 20px',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: '#888899',
+        cursor: 'pointer',
+        borderLeft: '3px solid transparent',
+        transition: 'all 0.2s',
+        display: 'block',
+        textDecoration: 'none',
+      },
+      navItemActive: {
+        color: '#8b5cf6',
+        background: 'rgba(139, 92, 246, 0.1)',
+        borderLeftColor: '#8b5cf6',
+      },
+      sidebarFooter: {
+        padding: '20px',
+        borderTop: '1px solid #2a2a3a',
+      },
+      mainContent: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      },
+      scrollableContent: {
+        flex: 1,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: '80px',
+      },
+      mobileNav: {
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: '#12121a',
+        borderTop: '1px solid #2a2a3a',
+        display: 'flex',
+        justifyContent: 'space-around',
+        padding: '8px',
+        zIndex: 101,
+      },
+      mobileNavItem: {
+        flex: 1,
+        padding: '12px 8px',
+        fontSize: '11px',
+        fontWeight: '500',
+        color: '#888899',
+        cursor: 'pointer',
+        textAlign: 'center',
+        borderRadius: '8px',
+        transition: 'all 0.2s',
+      },
+      mobileNavItemActive: {
+        color: '#8b5cf6',
+        background: 'rgba(139, 92, 246, 0.1)',
+      },
+    };
+
+    // ============================================
+    // COMPONENTS
+    // ============================================
+
+    // Login Component
+    function Login({ onLogin, employeeList }) {
+      const [selectedEmployee, setSelectedEmployee] = useState('');
+      const [employeeId, setEmployeeId] = useState('');
+      const [error, setError] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        setError('');
+
+        if (!selectedEmployee) {
+          setError('Please select your name');
+          return;
+        }
+
+        if (!employeeId) {
+          setError('Please enter your employee ID');
+          return;
+        }
+
+        // Find the selected employee
+        const employee = employeeList.find(emp => emp.name === selectedEmployee);
+
+        if (!employee) {
+          setError('Employee not found');
+          return;
+        }
+
+        // Verify employee ID
+        if (employee.id !== employeeId.trim()) {
+          setError('Invalid employee ID');
+          return;
+        }
+
+        // Determine role based on employee ID
+        const role = SUPERVISOR_IDS.includes(employee.id) ? 'supervisor' : 'busser';
+
+        onLogin(employee.name, employee.id, role);
+      };
+
+      return (
+        <div style={styles.loginContainer}>
+          <div style={styles.loginCard}>
+            <div style={styles.logoContainer}>
+              <div style={styles.logo}>💰</div>
+              <h1 style={styles.appTitle}>LIV Tips</h1>
+              <p style={styles.appSubtitle}>The Made Guys</p>
+            </div>
+
+            <form onSubmit={handleSubmit} style={styles.form}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Select Your Name</label>
+                <select
+                  value={selectedEmployee}
+                  onChange={(e) => setSelectedEmployee(e.target.value)}
+                  style={styles.select}
+                >
+                  <option value="">-- Choose your name --</option>
+                  {employeeList.map(emp => (
+                    <option key={emp.id} value={emp.name}>
+                      {emp.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Employee ID</label>
+                <input
+                  type="text"
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  style={styles.input}
+                  placeholder="Enter your employee ID"
+                  inputMode="numeric"
+                />
+              </div>
+
+              {error && <p style={styles.error}>{error}</p>}
+
+              <button type="submit" style={styles.primaryBtn}>
+                Sign In
+              </button>
+            </form>
+
+            <div style={styles.adminLink}>
+              <span onClick={() => onLogin('__ADMIN__', '', 'admin')} style={styles.adminLinkText}>
+                Admin Access →
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Admin Panel Component
+    function AdminPanel({ shiftData, setShiftData, employeeData, setEmployeeData, employeeList, setEmployeeList, onLogout }) {
+      const [currentPage, setCurrentPage] = useState('shift-data');
+      const [selectedDate, setSelectedDate] = useState(dateKey(getBusinessDay()));
+      const [totalTips, setTotalTips] = useState('');
+      const [endTimeHour, setEndTimeHour] = useState('');
+      const [endTimeMin, setEndTimeMin] = useState('00');
+      const [endTimePeriod, setEndTimePeriod] = useState('AM');
+      const [bussers10Count, setBussers10Count] = useState('');
+      const [bussers12Count, setBussers12Count] = useState('');
+      const [saved, setSaved] = useState(false);
+
+      // Banquet tracking
+      const [hasBanquet, setHasBanquet] = useState(false);
+      const [banquetEmployees, setBanquetEmployees] = useState([]);
+      const [banquetInHour, setBanquetInHour] = useState('');
+      const [banquetInMin, setBanquetInMin] = useState('00');
+      const [banquetInPeriod, setBanquetInPeriod] = useState('PM');
+
+      // Supervisors on shift (IDs). In-time is admin-controlled (9:30 PM or banquet-in);
+      // clock-OUT is entered by the supervisor on their own dashboard, not here.
+      const [supervisorsWorked, setSupervisorsWorked] = useState([]);
+
+      // Extra bussers — admin-entered custom in-times (additive pool hours)
+      const [extraBussers, setExtraBussers] = useState([]); // [{ name, inTime }]
+      const [extraName, setExtraName] = useState('');
+      const [extraInHour, setExtraInHour] = useState('');
+      const [extraInMin, setExtraInMin] = useState('00');
+      const [extraInPeriod, setExtraInPeriod] = useState('PM');
+
+      // Early departure tracking (batch)
+      const [showEarlyDeparture, setShowEarlyDeparture] = useState(false);
+      const [batchCutSelected, setBatchCutSelected] = useState([]);
+      const [earlyEndHour, setEarlyEndHour] = useState('');
+      const [earlyEndMin, setEarlyEndMin] = useState('00');
+      const [earlyEndPeriod, setEarlyEndPeriod] = useState('AM');
+      const [hoveredEntry, setHoveredEntry] = useState(null);
+      const [showSaveCheck, setShowSaveCheck] = useState(false);
+
+      // Edit early departure modal
+      const [showEditDepartureModal, setShowEditDepartureModal] = useState(false);
+      const [editingEmployee, setEditingEmployee] = useState('');
+      const [editDepartureHour, setEditDepartureHour] = useState('');
+      const [editDepartureMin, setEditDepartureMin] = useState('00');
+      const [editDeparturePeriod, setEditDeparturePeriod] = useState('AM');
+      const [hoveredDepartureEmployee, setHoveredDepartureEmployee] = useState(null);
+      const isMobileAdmin = typeof window !== 'undefined' && window.innerWidth < 768;
+
+      // Employee management
+      const [newEmployeeName, setNewEmployeeName] = useState('');
+      const [newEmployeeId, setNewEmployeeId] = useState('');
+
+      // Load existing data when date changes
+      useEffect(() => {
+        const existing = shiftData[selectedDate];
+        if (existing) {
+          setTotalTips(existing.totalTips?.toString() || '');
+          if (existing.endTime) {
+            const match = existing.endTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (match) {
+              setEndTimeHour(match[1]);
+              setEndTimeMin(match[2]);
+              setEndTimePeriod(match[3].toUpperCase());
+            }
+          } else {
+            setEndTimeHour('');
+            setEndTimeMin('00');
+            setEndTimePeriod('AM');
+          }
+          setBussers10Count(existing.bussers10Count?.toString() || '');
+          setBussers12Count(existing.bussers12Count?.toString() || '');
+          // Load banquet data
+          setHasBanquet(existing.hasBanquet || false);
+          setBanquetEmployees(existing.banquetEmployees || []);
+          if (existing.banquetInTime) {
+            const banquetMatch = existing.banquetInTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (banquetMatch) {
+              setBanquetInHour(banquetMatch[1]);
+              setBanquetInMin(banquetMatch[2]);
+              setBanquetInPeriod(banquetMatch[3].toUpperCase());
+            }
+          } else {
+            setBanquetInHour('');
+            setBanquetInMin('00');
+            setBanquetInPeriod('PM');
+          }
+          // Load supervisors + extras
+          setSupervisorsWorked(existing.supervisorsWorked || []);
+          setExtraBussers(existing.extraBussers || []);
+        } else {
+          setTotalTips('');
+          setEndTimeHour('');
+          setEndTimeMin('00');
+          setEndTimePeriod('AM');
+          setBussers10Count('');
+          setBussers12Count('');
+          setHasBanquet(false);
+          setBanquetEmployees([]);
+          setBanquetInHour('');
+          setBanquetInMin('00');
+          setBanquetInPeriod('PM');
+          setSupervisorsWorked([]);
+          setExtraBussers([]);
+        }
+        setExtraName('');
+        setExtraInHour('');
+        setExtraInMin('00');
+        setExtraInPeriod('PM');
+        setBatchCutSelected([]);
+        setSaved(false);
+      }, [selectedDate, shiftData]);
+
+      const handleSave = () => {
+        const formattedMin = endTimeMin.toString().padStart(2, '0');
+        const fullEndTime = endTimeHour ? `${endTimeHour}:${formattedMin} ${endTimePeriod}` : '';
+
+        // Format banquet in time
+        const banquetFormattedMin = banquetInMin.toString().padStart(2, '0');
+        const fullBanquetInTime = banquetInHour ? `${banquetInHour}:${banquetFormattedMin} ${banquetInPeriod}` : '';
+
+        // Get previous banquet employees to check if we need to clear any
+        const previousBanquetEmployees = shiftData[selectedDate]?.banquetEmployees || [];
+        const previousExtraNames = (shiftData[selectedDate]?.extraBussers || []).map(e => e.name);
+
+        // Supervisors who worked = the admin checkboxes. In-time and out-time are
+        // both self-entered by the supervisor; banquet no longer affects supervisors.
+
+        const newData = {
+          ...shiftData,
+          [selectedDate]: {
+            totalTips: parseFloat(totalTips) || 0,
+            endTime: fullEndTime,
+            bussers10Count: parseInt(bussers10Count) || 0,
+            bussers12Count: parseInt(bussers12Count) || 0,
+            hasBanquet: hasBanquet,
+            banquetEmployees: hasBanquet ? banquetEmployees : [],
+            banquetInTime: hasBanquet ? fullBanquetInTime : '',
+            supervisorsWorked: supervisorsWorked,
+            extraBussers: extraBussers,
+          }
+        };
+        setShiftData(newData);
+        saveData('shiftData', newData);
+
+        // Handle employee data updates
+        let newEmployeeData = { ...employeeData };
+
+        // Clear banquet data for employees who are no longer banquet workers
+        // (either banquet was turned off, or they were removed from the list)
+        const employeesToClear = previousBanquetEmployees.filter(empName =>
+          !hasBanquet || !banquetEmployees.includes(empName)
+        );
+
+        employeesToClear.forEach(empName => {
+          if (newEmployeeData[empName]?.[selectedDate]?.isBanquetWorker) {
+            // Remove banquet-related data for this employee on this date
+            const empDateData = { ...newEmployeeData[empName][selectedDate] };
+            delete empDateData.startTimeOverride;
+            delete empDateData.showStartOverride;
+            delete empDateData.startTimeOverride_timestamp;
+            delete empDateData.isBanquetWorker;
+
+            // If no other data remains, remove the date entry entirely
+            const hasOtherData = empDateData.startTime || empDateData.endTimeOverride;
+            if (!hasOtherData) {
+              delete empDateData.savedAt;
+            }
+
+            newEmployeeData = {
+              ...newEmployeeData,
+              [empName]: {
+                ...newEmployeeData[empName],
+                [selectedDate]: Object.keys(empDateData).length > 0 ? empDateData : undefined
+              }
+            };
+
+            // Clean up undefined entries
+            if (!newEmployeeData[empName][selectedDate]) {
+              const empData = { ...newEmployeeData[empName] };
+              delete empData[selectedDate];
+              newEmployeeData[empName] = empData;
+            }
+          }
+        });
+
+        // Auto-populate banquet workers' employee data
+        const hasBanquetChanges = (hasBanquet && banquetEmployees.length > 0 && fullBanquetInTime) || employeesToClear.length > 0;
+
+        if (hasBanquet && banquetEmployees.length > 0 && fullBanquetInTime) {
+          banquetEmployees.forEach(empName => {
+            newEmployeeData = {
+              ...newEmployeeData,
+              [empName]: {
+                ...(newEmployeeData[empName] || {}),
+                [selectedDate]: {
+                  ...(newEmployeeData[empName]?.[selectedDate] || {}),
+                  startTimeOverride: fullBanquetInTime,
+                  showStartOverride: true,
+                  startTimeOverride_timestamp: Date.now(),
+                  isBanquetWorker: true,
+                  savedAt: Date.now()
+                }
+              }
+            };
+          });
+        }
+
+        // Extra bussers — mirror into employeeData exactly like banquet does,
+        // so the busser's own page shows the admin-entered in-time.
+        const extraNamesNow = extraBussers.map(e => e.name);
+        const extrasToClear = previousExtraNames.filter(n => !extraNamesNow.includes(n));
+
+        extrasToClear.forEach(empName => {
+          if (newEmployeeData[empName]?.[selectedDate]?.isExtraBusser) {
+            const empDateData = { ...newEmployeeData[empName][selectedDate] };
+            delete empDateData.startTimeOverride;
+            delete empDateData.showStartOverride;
+            delete empDateData.startTimeOverride_timestamp;
+            delete empDateData.isExtraBusser;
+
+            const hasOtherData = empDateData.startTime || empDateData.endTimeOverride;
+            if (!hasOtherData) {
+              delete empDateData.savedAt;
+            }
+
+            newEmployeeData = {
+              ...newEmployeeData,
+              [empName]: {
+                ...newEmployeeData[empName],
+                [selectedDate]: Object.keys(empDateData).length > 0 ? empDateData : undefined
+              }
+            };
+
+            if (!newEmployeeData[empName][selectedDate]) {
+              const empData = { ...newEmployeeData[empName] };
+              delete empData[selectedDate];
+              newEmployeeData[empName] = empData;
+            }
+          }
+        });
+
+        if (extraBussers.length > 0) {
+          extraBussers.forEach(entry => {
+            if (!entry || !entry.name || !entry.inTime) return;
+            newEmployeeData = {
+              ...newEmployeeData,
+              [entry.name]: {
+                ...(newEmployeeData[entry.name] || {}),
+                [selectedDate]: {
+                  ...(newEmployeeData[entry.name]?.[selectedDate] || {}),
+                  startTimeOverride: entry.inTime,
+                  showStartOverride: true,
+                  startTimeOverride_timestamp: Date.now(),
+                  isExtraBusser: true,
+                  savedAt: Date.now()
+                }
+              }
+            };
+          });
+        }
+
+        const hasExtraChanges = extraBussers.length > 0 || extrasToClear.length > 0;
+
+        // ONLY save employeeData if there were actual banquet/extras changes
+        // This prevents overwriting employee data if admin just saves shift info
+        if (hasBanquetChanges || hasExtraChanges) {
+          setEmployeeData(newEmployeeData);
+          saveData('employeeData', newEmployeeData);
+        }
+
+        setSaved(true);
+        setShowSaveCheck(true);
+        setTimeout(() => {
+          setSaved(false);
+          setShowSaveCheck(false);
+        }, 3000);
+      };
+
+      const handleDeleteEntry = (date, e) => {
+        e.stopPropagation();
+        if (confirm(`Delete entry for ${formatDate(new Date(date + 'T12:00:00'), 'long')}?`)) {
+          const newData = { ...shiftData };
+          delete newData[date];
+          setShiftData(newData);
+          saveData('shiftData', newData);
+        }
+      };
+
+      const handleLoadEntry = (date) => {
+        setSelectedDate(date);
+        setCurrentPage('shift-data'); // Navigate to shift data page to show the shift data
+      };
+
+      // Check if employee already has custom end time
+      const checkEmployeeCustomTime = (employeeName) => {
+        const empData = employeeData[employeeName];
+        if (!empData || !empData[selectedDate]) return false;
+
+        const dayData = empData[selectedDate];
+        // Check if they have an end time override
+        return dayData.endTimeOverride && dayData.endTimeOverride.trim() !== '';
+      };
+
+      // Toggle the batch early-departure section
+      const handleEarlyDepartureToggle = () => {
+        setShowEarlyDeparture(!showEarlyDeparture);
+        setBatchCutSelected([]);
+        setEarlyEndHour('');
+        setEarlyEndMin('00');
+        setEarlyEndPeriod('AM');
+      };
+
+      const toggleBatchCutEmployee = (empName) => {
+        setBatchCutSelected(prev =>
+          prev.includes(empName) ? prev.filter(n => n !== empName) : [...prev, empName]
+        );
+      };
+
+      // Save one cut time for every checked busser (cuts happen in waves —
+      // different waves = run this twice, section stays open)
+      const handleSaveBatchCuts = () => {
+        if (batchCutSelected.length === 0 || !earlyEndHour) return;
+
+        const formattedMin = earlyEndMin.toString().padStart(2, '0');
+        const earlyTime = `${earlyEndHour}:${formattedMin} ${earlyEndPeriod}`;
+
+        let newEmployeeData = { ...employeeData };
+        batchCutSelected.forEach(empName => {
+          newEmployeeData = {
+            ...newEmployeeData,
+            [empName]: {
+              ...(newEmployeeData[empName] || {}),
+              [selectedDate]: {
+                ...(newEmployeeData[empName]?.[selectedDate] || {}),
+                endTimeOverride: earlyTime,
+                showEndOverride: true,
+                endTimeOverride_timestamp: Date.now(),
+                adminSetEarlyDeparture: true,
+                savedAt: Date.now() // CRITICAL: savedAt so employee page shows this data
+              }
+            }
+          };
+        });
+
+        setEmployeeData(newEmployeeData);
+        saveData('employeeData', newEmployeeData);
+
+        alert(`✓ Cut time ${earlyTime} saved for ${batchCutSelected.length} busser(s)`);
+        setBatchCutSelected([]);
+        setEarlyEndHour('');
+        setEarlyEndMin('00');
+        setEarlyEndPeriod('AM');
+      };
+
+      // Add / remove an extra busser (custom in-time) in the form
+      const handleAddExtraBusser = () => {
+        if (!extraName || !extraInHour) return;
+        const formattedMin = extraInMin.toString().padStart(2, '0');
+        const inTime = `${extraInHour}:${formattedMin} ${extraInPeriod}`;
+        setExtraBussers([...extraBussers, { name: extraName, inTime }]);
+        setExtraName('');
+        setExtraInHour('');
+        setExtraInMin('00');
+        setExtraInPeriod('PM');
+      };
+
+      const handleRemoveExtraBusser = (empName) => {
+        setExtraBussers(extraBussers.filter(e => e.name !== empName));
+      };
+
+      // Open edit early departure modal
+      const handleOpenEditDeparture = (employeeName) => {
+        const empData = employeeData[employeeName][selectedDate];
+        const endTime = empData.endTimeOverride;
+
+        // Parse the time
+        const match = endTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (match) {
+          setEditDepartureHour(match[1]);
+          setEditDepartureMin(match[2]);
+          setEditDeparturePeriod(match[3].toUpperCase());
+        }
+
+        setEditingEmployee(employeeName);
+        setShowEditDepartureModal(true);
+      };
+
+      // Save edited early departure
+      const handleSaveEditDeparture = () => {
+        if (!editingEmployee || !editDepartureHour) return;
+
+        const formattedMin = editDepartureMin.toString().padStart(2, '0');
+        const newTime = `${editDepartureHour}:${formattedMin} ${editDeparturePeriod}`;
+
+        const newEmployeeData = {
+          ...employeeData,
+          [editingEmployee]: {
+            ...(employeeData[editingEmployee] || {}),
+            [selectedDate]: {
+              ...(employeeData[editingEmployee]?.[selectedDate] || {}),
+              endTimeOverride: newTime,
+              showEndOverride: true,
+              endTimeOverride_timestamp: Date.now(),
+              adminSetEarlyDeparture: true,
+              savedAt: Date.now()
+            }
+          }
+        };
+
+        setEmployeeData(newEmployeeData);
+        saveData('employeeData', newEmployeeData);
+
+        alert(`✓ Updated: ${editingEmployee} now leaves at ${newTime}`);
+        setShowEditDepartureModal(false);
+      };
+
+      // Delete early departure
+      const handleDeleteDeparture = () => {
+        if (!confirm(`Remove early departure for ${editingEmployee}?`)) return;
+
+        const currentData = employeeData[editingEmployee]?.[selectedDate] || {};
+
+        // Build new data with Firebase deleteField() to remove end time fields
+        const newEntry = { ...currentData };
+        delete newEntry.endTimeOverride;
+        delete newEntry.showEndOverride;
+        delete newEntry.endTimeOverride_timestamp;
+        delete newEntry.adminSetEarlyDeparture;
+
+        // If there's no other data (no start time), remove the entry completely
+        const hasOtherData = newEntry.startTime || newEntry.startTimeOverride;
+
+        if (!hasOtherData) {
+          // Remove entire entry for this date
+          const newUserData = { ...employeeData[editingEmployee] };
+          delete newUserData[selectedDate];
+
+          const newEmployeeData = {
+            ...employeeData,
+            [editingEmployee]: newUserData
+          };
+
+          setEmployeeData(newEmployeeData);
+          saveData('employeeData', newEmployeeData);
+        } else {
+          // Keep the entry but remove end time fields using deleteField
+          const firebaseEntry = {
+            ...newEntry,
+            endTimeOverride: window.firestoreDeleteField(),
+            showEndOverride: window.firestoreDeleteField(),
+            endTimeOverride_timestamp: window.firestoreDeleteField(),
+            adminSetEarlyDeparture: window.firestoreDeleteField()
+          };
+
+          const firebaseUserData = {
+            ...employeeData[editingEmployee],
+            [selectedDate]: firebaseEntry
+          };
+
+          const firebaseEmployeeData = {
+            ...employeeData,
+            [editingEmployee]: firebaseUserData
+          };
+
+          // Update local state with clean data
+          const cleanEmployeeData = {
+            ...employeeData,
+            [editingEmployee]: {
+              ...employeeData[editingEmployee],
+              [selectedDate]: newEntry
+            }
+          };
+
+          setEmployeeData(cleanEmployeeData);
+          saveData('employeeData', firebaseEmployeeData);
+        }
+
+        alert(`✓ Early departure removed for ${editingEmployee}`);
+        setShowEditDepartureModal(false);
+      };
+
+      // Handle adding new employee
+      const handleAddEmployee = async () => {
+        if (!newEmployeeName.trim() || !newEmployeeId.trim()) {
+          alert('Please enter both employee name and ID');
+          return;
+        }
+
+        const name = newEmployeeName.trim();
+        const id = newEmployeeId.trim();
+
+        // PERMANENT-SAFE WRITE: an atomic Firestore transaction reads the CURRENT
+        // server list and applies only this one add. It never uses cached data, and
+        // if the server can't be reached it throws and aborts — so a bad connection
+        // can never overwrite the real roster with a stale copy (that was the bug
+        // that kept dropping people). Concurrent edits are retried automatically.
+        const docRef = window.firestoreDoc(window.firebaseDb, 'appData', 'rosterV2');
+        try {
+          const result = await window.firestoreRunTransaction(window.firebaseDb, async (tx) => {
+            const snap = await tx.get(docRef);
+            const current = (snap.exists() && Array.isArray(snap.data().value)) ? snap.data().value : [];
+            if (current.some(emp => emp.id === id)) {
+              return { status: 'exists' };
+            }
+            const updated = [...current, { name, id }].sort((a, b) => a.name.localeCompare(b.name));
+            tx.set(docRef, { value: updated }, { merge: true });
+            return { status: 'added', updated };
+          });
+
+          if (result.status === 'exists') {
+            alert('Employee ID already exists');
+            return;
+          }
+          // Reflect the server-confirmed list locally
+          setEmployeeList(result.updated);
+          setNewEmployeeName('');
+          setNewEmployeeId('');
+          alert(`✓ Added employee: ${name}`);
+        } catch (err) {
+          console.error('Add employee failed:', err);
+          alert('Could not reach the server. Nothing was changed — check your connection and try again.');
+        }
+      };
+
+      // Handle removing employee
+      const handleRemoveEmployee = async (employeeToRemove) => {
+        if (!confirm(`Remove ${employeeToRemove.name} from the employee list?`)) {
+          return;
+        }
+
+        // Same atomic, server-authoritative write as add: reads the current server
+        // list inside a transaction and removes only this one person. Aborts on a
+        // failed connection instead of writing a stale roster.
+        const docRef = window.firestoreDoc(window.firebaseDb, 'appData', 'rosterV2');
+        try {
+          const result = await window.firestoreRunTransaction(window.firebaseDb, async (tx) => {
+            const snap = await tx.get(docRef);
+            const current = (snap.exists() && Array.isArray(snap.data().value)) ? snap.data().value : [];
+            const updated = current.filter(emp => emp.id !== employeeToRemove.id);
+            tx.set(docRef, { value: updated }, { merge: true });
+            return { updated };
+          });
+          setEmployeeList(result.updated);
+        } catch (err) {
+          console.error('Remove employee failed:', err);
+          alert('Could not reach the server. Nothing was changed — check your connection and try again.');
+        }
+      };
+
+      // Calculate preview
+      const preview = (() => {
+        const formattedMin = endTimeMin.toString().padStart(2, '0');
+        const fullEndTime = endTimeHour ? `${endTimeHour}:${formattedMin} ${endTimePeriod}` : '';
+        if (!totalTips || !fullEndTime) return null;
+
+        const banquetFormattedMin = banquetInMin.toString().padStart(2, '0');
+        const fullBanquetInTime = banquetInHour ? `${banquetInHour}:${banquetFormattedMin} ${banquetInPeriod}` : '';
+
+        // Build the shift exactly as it would be saved, run it through the real pool math
+        const tempShift = {
+          totalTips: parseFloat(totalTips) || 0,
+          endTime: fullEndTime,
+          bussers10Count: parseInt(bussers10Count) || 0,
+          bussers12Count: parseInt(bussers12Count) || 0,
+          hasBanquet: hasBanquet,
+          banquetEmployees: hasBanquet ? banquetEmployees : [],
+          banquetInTime: hasBanquet ? fullBanquetInTime : '',
+          extraBussers: extraBussers
+        };
+        const pool = computeShiftPool(tempShift, employeeData, selectedDate);
+        if (!pool) return null;
+
+        return {
+          totalHours: pool.totalStaffHours,
+          tipPool: pool.tipPool,
+          perHour: pool.perHour,
+          supervisorRate: pool.perHour * SUPERVISOR_MULTIPLIER
+        };
+      })();
+
+      // Render the Shift Data page
+      const renderShiftDataPage = () => (
+        <div style={styles.content}>
+          <div style={styles.card}>
+            <h2 style={styles.cardTitle}>Enter Shift Data</h2>
+              
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Date</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
+              
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Total Tips ($)</label>
+                <input
+                  type="number"
+                  value={totalTips}
+                  onChange={(e) => setTotalTips(e.target.value)}
+                  style={styles.input}
+                  placeholder="0.00"
+                  step="0.01"
+                />
+              </div>
+              
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Shift End Time</label>
+                <div style={styles.timeInputGroup}>
+                  <input
+                    type="number"
+                    value={endTimeHour}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setEndTimeHour('');
+                      } else {
+                        const num = parseInt(val);
+                        if (num >= 1 && num <= 12) {
+                          setEndTimeHour(val);
+                        }
+                      }
+                    }}
+                    style={{...styles.input, flex: 1, textAlign: 'center'}}
+                    placeholder="Hr"
+                    min="1"
+                    max="12"
+                  />
+                  <span style={{color: '#888899', fontSize: '24px', alignSelf: 'center'}}>:</span>
+                  <input
+                    type="number"
+                    value={endTimeMin}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setEndTimeMin('');
+                      } else {
+                        const num = parseInt(val);
+                        if (num >= 0 && num <= 59) {
+                          setEndTimeMin(val);
+                        }
+                      }
+                    }}
+                    style={{...styles.input, flex: 1, textAlign: 'center'}}
+                    placeholder="Min"
+                    min="0"
+                    max="59"
+                  />
+                  <select
+                    value={endTimePeriod}
+                    onChange={(e) => setEndTimePeriod(e.target.value)}
+                    style={{...styles.select, width: '80px'}}
+                  >
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div style={styles.divider} />
+
+              <h3 style={styles.subTitle}>Staff Count</h3>
+
+              <div style={styles.countGrid}>
+                <div style={styles.countItem}>
+                  <label style={styles.countLabel}>Bussers (10PM)</label>
+                  <input
+                    type="number"
+                    value={bussers10Count}
+                    onChange={(e) => setBussers10Count(e.target.value)}
+                    style={styles.countInput}
+                    min="0"
+                  />
+                </div>
+                <div style={styles.countItem}>
+                  <label style={styles.countLabel}>Bussers (12AM)</label>
+                  <input
+                    type="number"
+                    value={bussers12Count}
+                    onChange={(e) => setBussers12Count(e.target.value)}
+                    style={styles.countInput}
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div style={styles.divider} />
+
+              {/* Banquet Section */}
+              <h3 style={styles.subTitle}>Banquet</h3>
+
+              <div style={{marginBottom: '16px'}}>
+                <label style={{...styles.label, display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer'}}>
+                  <span>Was there a banquet?</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasBanquet(!hasBanquet);
+                      if (hasBanquet) {
+                        setBanquetEmployees([]);
+                        setBanquetInHour('');
+                        setBanquetInMin('00');
+                        setBanquetInPeriod('PM');
+                      }
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: hasBanquet ? '#22c55e' : 'rgba(255,255,255,0.1)',
+                      color: hasBanquet ? '#fff' : '#888899',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {hasBanquet ? 'Yes' : 'No'}
+                  </button>
+                </label>
+              </div>
+
+              {hasBanquet && (
+                <div style={{background: 'rgba(34, 197, 94, 0.1)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.3)'}}>
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Banquet IN Time (same for all)</label>
+                    <div style={styles.timeInputGroup}>
+                      <input
+                        type="number"
+                        value={banquetInHour}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            setBanquetInHour('');
+                          } else {
+                            const num = parseInt(val);
+                            if (num >= 1 && num <= 12) {
+                              setBanquetInHour(val);
+                            }
+                          }
+                        }}
+                        style={{...styles.input, flex: 1, textAlign: 'center'}}
+                        placeholder="Hr"
+                        min="1"
+                        max="12"
+                      />
+                      <span style={{color: '#888899', fontSize: '24px', alignSelf: 'center'}}>:</span>
+                      <input
+                        type="number"
+                        value={banquetInMin}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            setBanquetInMin('');
+                          } else {
+                            const num = parseInt(val);
+                            if (num >= 0 && num <= 59) {
+                              setBanquetInMin(val);
+                            }
+                          }
+                        }}
+                        style={{...styles.input, flex: 1, textAlign: 'center'}}
+                        placeholder="Min"
+                        min="0"
+                        max="59"
+                      />
+                      <select
+                        value={banquetInPeriod}
+                        onChange={(e) => setBanquetInPeriod(e.target.value)}
+                        style={{...styles.select, width: '80px'}}
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Select Banquet Workers ({banquetEmployees.length} selected)</label>
+                    <div style={{maxHeight: '200px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px'}}>
+                      {employeeList.filter(emp => !SUPERVISOR_IDS.includes(emp.id)).map(emp => (
+                        <label
+                          key={emp.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '8px',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            background: banquetEmployees.includes(emp.name) ? 'rgba(34, 197, 94, 0.2)' : 'transparent'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={banquetEmployees.includes(emp.name)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setBanquetEmployees([...banquetEmployees, emp.name]);
+                              } else {
+                                setBanquetEmployees(banquetEmployees.filter(n => n !== emp.name));
+                              }
+                            }}
+                            style={{width: '18px', height: '18px'}}
+                          />
+                          <span style={{color: '#fff'}}>{emp.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {preview && (
+                <div style={styles.preview}>
+                  <div style={styles.previewItem}>
+                    <span style={styles.previewLabel}>Tip Pool</span>
+                    <span style={styles.previewValue}>${preview.tipPool.toFixed(2)}</span>
+                  </div>
+                  <div style={styles.previewItem}>
+                    <span style={styles.previewLabel}>Total Hours</span>
+                    <span style={styles.previewValue}>{formatHours(preview.totalHours)}</span>
+                  </div>
+                  <div style={styles.previewItem}>
+                    <span style={styles.previewLabel}>Per Hour Rate</span>
+                    <span style={styles.previewValueHighlight}>${preview.perHour.toFixed(2)}/hr</span>
+                  </div>
+                  <div style={styles.previewRow}>
+                    <span style={styles.previewLabel}>Supervisor Rate (×1.20)</span>
+                    <span style={styles.previewValue}>${preview.supervisorRate.toFixed(2)}/hr</span>
+                  </div>
+                </div>
+              )}
+              
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Supervisors on Shift (busser rate × 1.20)</label>
+                <p style={{...styles.hint, marginBottom: '10px'}}>
+                  Check who worked. Each supervisor enters their own in-time and clock-out from their login — you don't set their times here.
+                </p>
+                {SUPERVISORS.map(sup => {
+                  const worked = supervisorsWorked.includes(sup.id);
+                  return (
+                    <div key={sup.id} style={{
+                      marginBottom: '10px', padding: '12px', borderRadius: '10px',
+                      background: worked ? 'rgba(139, 92, 246, 0.12)' : 'rgba(255,255,255,0.04)',
+                      border: worked ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent'
+                    }}>
+                      <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                        <input
+                          type="checkbox"
+                          checked={worked}
+                          onChange={() => {
+                            if (worked) {
+                              setSupervisorsWorked(supervisorsWorked.filter(i => i !== sup.id));
+                            } else {
+                              setSupervisorsWorked([...supervisorsWorked, sup.id]);
+                            }
+                          }}
+                        />
+                        <span style={{marginLeft: '10px', fontWeight: '500'}}>{sup.name}</span>
+                        {worked ? (
+                          <span style={{marginLeft: '10px', fontSize: '12px', color: '#888899'}}>enters own in & out</span>
+                        ) : null}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Extra Bussers — different in-time ({extraBussers.length})</label>
+                <p style={{...styles.hint, marginBottom: '10px'}}>
+                  Bussers scheduled outside 10 PM / 12 AM. Their hours ADD to the pool — do not include them in the counts above.
+                </p>
+                {extraBussers.map(entry => (
+                  <div key={entry.name} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '10px 12px', marginBottom: '8px', borderRadius: '8px',
+                    background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)'
+                  }}>
+                    <span style={{fontSize: '14px'}}>{entry.name}</span>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                      <span style={{fontSize: '14px', fontWeight: '600', color: '#4ade80'}}>in {entry.inTime}</span>
+                      <button
+                        onClick={() => handleRemoveExtraBusser(entry.name)}
+                        style={{...styles.secondaryBtn, padding: '4px 10px', fontSize: '12px'}}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center'}}>
+                  <select
+                    value={extraName}
+                    onChange={(e) => setExtraName(e.target.value)}
+                    style={{...styles.select, flex: '1 1 160px'}}
+                  >
+                    <option value="">-- Choose busser --</option>
+                    {employeeList
+                      .filter(emp => !SUPERVISOR_IDS.includes(emp.id))
+                      .filter(emp => !extraBussers.some(e => e.name === emp.name))
+                      .map(emp => (
+                        <option key={emp.id} value={emp.name}>{emp.name}</option>
+                      ))}
+                  </select>
+                  <input
+                    type="number" placeholder="Hr" min="1" max="12"
+                    value={extraInHour}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || (parseInt(val) >= 1 && parseInt(val) <= 12)) setExtraInHour(val);
+                    }}
+                    style={{...styles.input, width: '64px', textAlign: 'center'}}
+                  />
+                  <span style={{color: '#888899'}}>:</span>
+                  <input
+                    type="number" placeholder="Min" min="0" max="59"
+                    value={extraInMin}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 59)) setExtraInMin(val);
+                    }}
+                    style={{...styles.input, width: '64px', textAlign: 'center'}}
+                  />
+                  <select
+                    value={extraInPeriod}
+                    onChange={(e) => setExtraInPeriod(e.target.value)}
+                    style={{...styles.select, width: '76px'}}
+                  >
+                    <option value="PM">PM</option>
+                    <option value="AM">AM</option>
+                  </select>
+                  <button
+                    onClick={handleAddExtraBusser}
+                    disabled={!extraName || !extraInHour}
+                    style={{
+                      ...styles.secondaryBtn,
+                      ...((!extraName || !extraInHour) ? { opacity: 0.5 } : {})
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              <div style={{position: 'relative', display: 'flex', alignItems: 'center'}}>
+                <button onClick={handleSave} style={styles.primaryBtn}>
+                  Save Shift Data
+                </button>
+                {showSaveCheck && (
+                  <span style={{
+                    ...styles.saveConfirmation,
+                    ...(showSaveCheck ? {} : styles.saveConfirmationFade)
+                  }}>
+                    ✓ Saved
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Early Departure</h2>
+              <p style={{...styles.subTitle, marginBottom: '20px'}}>
+                Did someone leave early tonight?
+              </p>
+
+              <button
+                onClick={handleEarlyDepartureToggle}
+                style={{...styles.secondaryBtn, width: '100%', marginBottom: '20px'}}
+              >
+                {showEarlyDeparture ? 'Cancel' : 'Yes, someone left early'}
+              </button>
+
+              {showEarlyDeparture && (
+                <>
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Who got cut? (check all — one time applies to everyone checked)</label>
+                    <div style={{maxHeight: '260px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '6px'}}>
+                      {employeeList
+                        .filter(emp => !SUPERVISOR_IDS.includes(emp.id))
+                        .map(emp => {
+                          const existingCut = employeeData[emp.name]?.[selectedDate]?.endTimeOverride;
+                          const checked = batchCutSelected.includes(emp.name);
+                          return (
+                            <label key={emp.id} style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              padding: '8px 10px', borderRadius: '8px', cursor: 'pointer',
+                              background: checked ? 'rgba(139, 92, 246, 0.15)' : 'transparent'
+                            }}>
+                              <span style={{display: 'flex', alignItems: 'center'}}>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => toggleBatchCutEmployee(emp.name)}
+                                />
+                                <span style={{marginLeft: '10px', fontSize: '14px'}}>{emp.name}</span>
+                              </span>
+                              {existingCut && (
+                                <span style={{fontSize: '12px', color: '#ffc857'}}>currently {existingCut}</span>
+                              )}
+                            </label>
+                          );
+                        })}
+                    </div>
+                  </div>
+
+                  {batchCutSelected.length > 0 && (
+                    <>
+                      <div style={styles.inputGroup}>
+                        <label style={styles.label}>Early End Time</label>
+                        <div style={styles.timeInputGroup}>
+                          <input
+                            type="number"
+                            value={earlyEndHour}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '') {
+                                setEarlyEndHour('');
+                              } else {
+                                const num = parseInt(val);
+                                if (num >= 1 && num <= 12) {
+                                  setEarlyEndHour(val);
+                                }
+                              }
+                            }}
+                            style={{...styles.input, flex: 1, textAlign: 'center'}}
+                            placeholder="Hr"
+                            min="1"
+                            max="12"
+                          />
+                          <span style={{color: '#888899', fontSize: '24px', alignSelf: 'center'}}>:</span>
+                          <input
+                            type="number"
+                            value={earlyEndMin}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '') {
+                                setEarlyEndMin('');
+                              } else {
+                                const num = parseInt(val);
+                                if (num >= 0 && num <= 59) {
+                                  setEarlyEndMin(val);
+                                }
+                              }
+                            }}
+                            style={{...styles.input, flex: 1, textAlign: 'center'}}
+                            placeholder="Min"
+                            min="0"
+                            max="59"
+                          />
+                          <select
+                            value={earlyEndPeriod}
+                            onChange={(e) => setEarlyEndPeriod(e.target.value)}
+                            style={{...styles.select, width: '80px'}}
+                          >
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <p style={styles.hint}>
+                        This sets the same cut time for {batchCutSelected.length} busser(s) on {formatDate(new Date(selectedDate + 'T12:00:00'), 'long')}. Different waves? Save this one, then check the next group.
+                      </p>
+
+                      <button
+                        onClick={handleSaveBatchCuts}
+                        style={{
+                          ...styles.primaryBtn,
+                          ...((!earlyEndHour) && styles.primaryBtnDisabled),
+                          width: '100%',
+                          marginTop: '16px'
+                        }}
+                        disabled={!earlyEndHour}
+                      >
+                        Save Cut Time for {batchCutSelected.length} Busser(s)
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Show who has early departures */}
+            {selectedDate && (() => {
+              const employeesWithEarlyDeparture = employeeList.filter(emp => {
+                const empData = employeeData[emp.name];
+                if (!empData || !empData[selectedDate]) return false;
+                return empData[selectedDate].endTimeOverride && empData[selectedDate].endTimeOverride.trim() !== '';
+              });
+
+              if (employeesWithEarlyDeparture.length === 0) return null;
+
+              return (
+                <div style={styles.card}>
+                  <h2 style={styles.cardTitle}>Early Departures for {formatDate(new Date(selectedDate + 'T12:00:00'))}</h2>
+                  <div style={{...styles.entriesList, marginTop: '16px'}}>
+                    {employeesWithEarlyDeparture.map(emp => {
+                      const empData = employeeData[emp.name][selectedDate];
+                      const setByAdmin = empData.adminSetEarlyDeparture;
+                      const isHovered = hoveredDepartureEmployee === emp.name;
+                      return (
+                        <div
+                          key={emp.name}
+                          style={{
+                            ...styles.entryItem,
+                            cursor: 'default',
+                            background: setByAdmin ? 'rgba(139, 92, 246, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                            border: setByAdmin ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
+                            position: 'relative'
+                          }}
+                          onMouseEnter={() => setHoveredDepartureEmployee(emp.name)}
+                          onMouseLeave={() => setHoveredDepartureEmployee(null)}
+                        >
+                          <div>
+                            <div style={{fontSize: '14px', fontWeight: '500', color: '#fff'}}>
+                              {emp.name}
+                            </div>
+                            <div style={{fontSize: '12px', color: '#888899', marginTop: '4px'}}>
+                              {setByAdmin ? '(Set by Admin)' : '(Set by Employee)'}
+                            </div>
+                          </div>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                            <div style={{fontSize: '16px', fontWeight: '600', color: setByAdmin ? '#a78bfa' : '#4ade80'}}>
+                              Left at {empData.endTimeOverride}
+                            </div>
+                            <button
+                              onClick={() => handleOpenEditDeparture(emp.name)}
+                              style={{
+                                ...styles.secondaryBtn,
+                                padding: '6px 12px',
+                                fontSize: '12px',
+                                opacity: isMobileAdmin ? 1 : (isHovered ? 1 : 0),
+                                transition: 'opacity 0.2s'
+                              }}
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Edit Early Departure Modal */}
+            {showEditDepartureModal && (
+              <div style={styles.modal}>
+                <div style={styles.modalContent}>
+                  <h2 style={styles.modalTitle}>Edit Early Departure</h2>
+                  <p style={{...styles.subTitle, marginBottom: '20px'}}>
+                    {editingEmployee}
+                  </p>
+
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Early End Time</label>
+                    <div style={styles.timeInputGroup}>
+                      <input
+                        type="number"
+                        value={editDepartureHour}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            setEditDepartureHour('');
+                          } else {
+                            const num = parseInt(val);
+                            if (num >= 1 && num <= 12) {
+                              setEditDepartureHour(val);
+                            }
+                          }
+                        }}
+                        style={{...styles.input, flex: 1, textAlign: 'center'}}
+                        placeholder="Hr"
+                        min="1"
+                        max="12"
+                      />
+                      <span style={{color: '#888899', fontSize: '24px', alignSelf: 'center'}}>:</span>
+                      <input
+                        type="number"
+                        value={editDepartureMin}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            setEditDepartureMin('');
+                          } else {
+                            const num = parseInt(val);
+                            if (num >= 0 && num <= 59) {
+                              setEditDepartureMin(val);
+                            }
+                          }
+                        }}
+                        style={{...styles.input, flex: 1, textAlign: 'center'}}
+                        placeholder="Min"
+                        min="0"
+                        max="59"
+                      />
+                      <select
+                        value={editDeparturePeriod}
+                        onChange={(e) => setEditDeparturePeriod(e.target.value)}
+                        style={{...styles.select, width: '80px'}}
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{display: 'flex', gap: '12px', marginTop: '24px'}}>
+                    <button
+                      onClick={handleSaveEditDeparture}
+                      style={{
+                        ...styles.primaryBtn,
+                        ...((!editDepartureHour) && styles.primaryBtnDisabled),
+                        flex: 1
+                      }}
+                      disabled={!editDepartureHour}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleDeleteDeparture}
+                      style={{
+                        ...styles.secondaryBtn,
+                        flex: 1,
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        color: '#ef4444'
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setShowEditDepartureModal(false)}
+                    style={{
+                      ...styles.secondaryBtn,
+                      width: '100%',
+                      marginTop: '12px'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      // Render the Recent Entries page
+      const renderRecentEntriesPage = () => (
+        <div style={styles.content}>
+          <div style={styles.card}>
+            <h2 style={styles.cardTitle}>Recent Entries</h2>
+              <div style={styles.entriesList}>
+                {Object.entries(shiftData)
+                  .sort((a, b) => b[0].localeCompare(a[0]))
+                  .slice(0, 7)
+                  .map(([date, data]) => (
+                    <div
+                      key={date}
+                      style={{
+                        ...styles.entryItem,
+                        ...(hoveredEntry === date ? styles.entryItemHover : {})
+                      }}
+                      onClick={() => handleLoadEntry(date)}
+                      onMouseEnter={() => setHoveredEntry(date)}
+                      onMouseLeave={() => setHoveredEntry(null)}
+                    >
+                      <span style={styles.entryDate}>{formatDate(new Date(date + 'T12:00:00'), 'long')}</span>
+                      <div style={{display: 'flex', alignItems: 'center'}}>
+                        <span style={styles.entryTips}>${data.totalTips?.toFixed(2) || '0.00'}</span>
+                        <button
+                          onClick={(e) => handleDeleteEntry(date, e)}
+                          style={{
+                            ...styles.deleteBtn,
+                            opacity: isMobileAdmin ? 1 : (hoveredEntry === date ? 1 : 0)
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                {Object.keys(shiftData).length === 0 && (
+                  <p style={styles.emptyText}>No entries yet</p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      // Render the Employee Management page
+      const renderEmployeeManagementPage = () => (
+        <div style={styles.content}>
+          <div style={styles.card}>
+            <h2 style={styles.cardTitle}>Employee Management</h2>
+              <p style={{...styles.subTitle, marginBottom: '20px'}}>
+                Add or remove employees from the list
+              </p>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Add New Employee</label>
+                <input
+                  type="text"
+                  value={newEmployeeName}
+                  onChange={(e) => setNewEmployeeName(e.target.value)}
+                  style={styles.input}
+                  placeholder="Last Name, First Name"
+                />
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Employee ID</label>
+                <input
+                  type="text"
+                  value={newEmployeeId}
+                  onChange={(e) => setNewEmployeeId(e.target.value)}
+                  style={styles.input}
+                  placeholder="12345"
+                  inputMode="numeric"
+                />
+              </div>
+
+              <button
+                onClick={handleAddEmployee}
+                style={{
+                  ...styles.primaryBtn,
+                  width: '100%',
+                  marginBottom: '24px'
+                }}
+              >
+                Add Employee
+              </button>
+
+              <div style={styles.divider} />
+
+              <h3 style={styles.subTitle}>Current Employees ({employeeList.length})</h3>
+
+              <div style={styles.entriesList}>
+                {employeeList.map(emp => (
+                  <div
+                    key={emp.id}
+                    style={{
+                      ...styles.entryItem,
+                      cursor: 'default'
+                    }}
+                  >
+                    <div>
+                      <div style={{fontSize: '14px', fontWeight: '500'}}>{emp.name}</div>
+                      <div style={{fontSize: '12px', color: '#888899', marginTop: '2px'}}>ID: {emp.id}</div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveEmployee(emp)}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        background: 'rgba(255, 107, 107, 0.1)',
+                        border: '1px solid rgba(255, 107, 107, 0.3)',
+                        borderRadius: '6px',
+                        color: '#ff6b6b',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+      return (
+        <div style={{...styles.container, ...styles.adminLayout}}>
+          {/* Desktop Sidebar Navigation - Hidden on mobile */}
+          {!isMobile && (
+            <div style={styles.sidebarDesktop}>
+              <div style={styles.sidebarHeader}>
+                <h1 style={styles.sidebarTitle}>Admin Panel</h1>
+              </div>
+
+              <nav style={styles.nav}>
+                <div
+                  onClick={() => setCurrentPage('shift-data')}
+                  style={{
+                    ...styles.navItem,
+                    ...(currentPage === 'shift-data' ? styles.navItemActive : {})
+                  }}
+                >
+                  Enter Shift Data
+                </div>
+                <div
+                  onClick={() => setCurrentPage('recent-entries')}
+                  style={{
+                    ...styles.navItem,
+                    ...(currentPage === 'recent-entries' ? styles.navItemActive : {})
+                  }}
+                >
+                  Recent Entries
+                </div>
+                <div
+                  onClick={() => setCurrentPage('employee-management')}
+                  style={{
+                    ...styles.navItem,
+                    ...(currentPage === 'employee-management' ? styles.navItemActive : {})
+                  }}
+                >
+                  Employee Management
+                </div>
+              </nav>
+
+              <div style={styles.sidebarFooter}>
+                <button onClick={onLogout} style={{...styles.logoutBtn, width: '100%'}}>
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div style={styles.mainContent}>
+            <header style={styles.header}>
+              <h1 style={styles.headerTitle}>
+                {currentPage === 'shift-data' && 'Enter Shift Data'}
+                {currentPage === 'recent-entries' && 'Recent Entries'}
+                {currentPage === 'employee-management' && 'Employee Management'}
+              </h1>
+              {isMobile && (
+                <button onClick={onLogout} style={styles.logoutBtn}>
+                  Logout
+                </button>
+              )}
+            </header>
+
+            <div style={styles.scrollableContent}>
+              {currentPage === 'shift-data' && renderShiftDataPage()}
+              {currentPage === 'recent-entries' && renderRecentEntriesPage()}
+              {currentPage === 'employee-management' && renderEmployeeManagementPage()}
+            </div>
+          </div>
+
+          {/* Mobile Bottom Navigation */}
+          {isMobile && (
+            <nav style={styles.mobileNav}>
+              <div
+                onClick={() => setCurrentPage('shift-data')}
+                style={{
+                  ...styles.mobileNavItem,
+                  ...(currentPage === 'shift-data' ? styles.mobileNavItemActive : {})
+                }}
+              >
+                Shift Data
+              </div>
+              <div
+                onClick={() => setCurrentPage('recent-entries')}
+                style={{
+                  ...styles.mobileNavItem,
+                  ...(currentPage === 'recent-entries' ? styles.mobileNavItemActive : {})
+                }}
+              >
+                Recent
+              </div>
+              <div
+                onClick={() => setCurrentPage('employee-management')}
+                style={{
+                  ...styles.mobileNavItem,
+                  ...(currentPage === 'employee-management' ? styles.mobileNavItemActive : {})
+                }}
+              >
+                Employees
+              </div>
+            </nav>
+          )}
+        </div>
+      );
+    }
+
+    // Employee Dashboard Component
+    function EmployeeDashboard({ user, shiftData, employeeData, setEmployeeData, onLogout, dataReady }) {
+      const today = new Date();
+      const [periodOffset, setPeriodOffset] = useState(0);
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      
+      // Calculate pay period with offset
+      const getOffsetPayPeriod = (offset) => {
+        const baseDate = new Date(today);
+        baseDate.setDate(baseDate.getDate() + (offset * PAY_PERIOD_DAYS));
+        return getPayPeriod(baseDate);
+      };
+      
+      const { startDate, endDate } = getOffsetPayPeriod(periodOffset);
+      const dates = getDatesInPeriod(startDate, endDate);
+      const isCurrentPeriod = periodOffset === 0;
+      
+      // Use employeeData directly instead of local state
+      const localData = employeeData[user.username] || {};
+
+      // Add Shift Modal state
+      const [showAddShiftModal, setShowAddShiftModal] = useState(false);
+      const [modalDate, setModalDate] = useState(null);
+      const [modalStartTime, setModalStartTime] = useState('');
+
+      // Manual save function - only called when user clicks SAVE in modal
+      const saveShiftData = (date, shiftInfo) => {
+        // SAFEGUARD: Check if data is actually ready in React state
+        // This prevents overwriting other users' data if React state hasn't updated yet
+        if (!dataReady) {
+          alert('Please wait for data to load before saving.');
+          return;
+        }
+
+        const key = dateKey(date);
+        const currentUserData = employeeData[user.username] || {};
+        const timestamp = Date.now();
+
+        // Build clean entry for React state — spread the existing entry first so
+        // admin-owned fields (endTimeOverride etc.) survive locally as well
+        const cleanEntry = {
+          ...(currentUserData[key] || {}),
+          savedAt: timestamp,
+          ...shiftInfo
+        };
+
+        // OWNERSHIP RULE: bussers only ever WRITE their start selection.
+        // They never delete anything — end times (cuts) belong to admin, and the
+        // old deleteField() calls here were silently erasing admin-set cut times
+        // whenever a busser re-saved their shift.
+        const firebaseEntry = {
+          savedAt: timestamp,
+          ...shiftInfo
+        };
+
+        // Update React state with clean data
+        const newUserData = {
+          ...currentUserData,
+          [key]: cleanEntry
+        };
+        const newEmployeeData = { ...employeeData, [user.username]: newUserData };
+
+        // Save to Firebase with deleteField markers
+        const firebaseUserData = {
+          ...currentUserData,
+          [key]: firebaseEntry
+        };
+        const firebaseEmployeeData = { ...employeeData, [user.username]: firebaseUserData };
+
+        logger.log('info', `💾 Saving shift data for ${user.username} on ${key}`, shiftInfo);
+        logger.log('info', `📥 Clean data for React state:`, cleanEntry);
+        logger.log('info', `📥 Data with deleteField markers for Firebase:`, firebaseEntry);
+
+        setEmployeeData(newEmployeeData);
+        saveData('employeeData', firebaseEmployeeData);
+      };
+
+      // Convert "3:00 AM" to "03:00" (24-hour format for input type="time")
+      const convertTo24Hour = (timeStr) => {
+        if (!timeStr) return '';
+        const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (!match) return '';
+
+        let hours = parseInt(match[1]);
+        const minutes = match[2];
+        const period = match[3].toUpperCase();
+
+        if (period === 'AM' && hours === 12) hours = 0;
+        if (period === 'PM' && hours !== 12) hours += 12;
+
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+      };
+
+      // Convert "03:00" to "3:00 AM" (12-hour format for storage)
+      const convertToAMPM = (time24) => {
+        if (!time24) return '';
+        const [hours24, minutes] = time24.split(':');
+        let hours = parseInt(hours24);
+        const period = hours >= 12 ? 'PM' : 'AM';
+
+        if (hours === 0) hours = 12;
+        else if (hours > 12) hours -= 12;
+
+        return `${hours}:${minutes} ${period}`;
+      };
+
+      // Validate time format (e.g., "3:00 AM", "10:30 PM")
+      const validateTimeInput = (value) => {
+        if (!value || value.trim() === '') return true; // Allow empty
+
+        // Match format like "3:00 AM" or "10:30 PM"
+        const timeRegex = /^(1[0-2]|[1-9]):([0-5][0-9])\s*(AM|PM)$/i;
+        return timeRegex.test(value.trim());
+      };
+
+      // Open Add Shift Modal
+      const openAddShiftModal = (date) => {
+        const key = dateKey(date);
+        const existingData = localData[key] || {};
+        const shift = shiftData[key];
+
+        // Days where admin set the time (banquet or extra-busser) are read-only for the busser
+        const isExtraDay = !!(shift && (shift.extraBussers || []).some(e => e.name === user.username));
+        if (isExtraDay || existingData.isBanquetWorker) {
+          alert('Your time for this shift was set by admin.');
+          return;
+        }
+
+        setModalDate(date);
+        setModalStartTime(existingData.startTime || '');
+        setShowAddShiftModal(true);
+      };
+
+      // Save shift from modal
+      const handleSaveShift = () => {
+        if (!modalDate) return;
+
+        const key = dateKey(modalDate);
+        const existingData = localData[key] || {};
+
+        // Start FRESH - don't carry over old time fields
+        const shiftInfo = {};
+        const timestamp = Date.now();
+
+        logger.log('info', '🔵 SAVE BUTTON CLICKED', { modalStartTime, existingData });
+
+        // Bussers only pick 10 PM or 12 AM. Everything else (banquet in-times,
+        // extra in-times, cut times) is entered by admin.
+        if (modalStartTime) {
+          logger.log('success', '✅ Using preset start time', { time: modalStartTime });
+          shiftInfo.startTime = modalStartTime;
+          shiftInfo.startTime_timestamp = timestamp;
+        } else {
+          logger.log('error', '❌ No start time selected');
+          alert('Please select a start time');
+          return;
+        }
+
+        logger.log('info', '📦 Final shiftInfo to save (will replace all old time fields)', shiftInfo);
+        saveShiftData(modalDate, shiftInfo);
+        setShowAddShiftModal(false);
+
+        // Brief confirmation
+        const toast = document.createElement('div');
+        toast.textContent = '✓ Saved';
+        toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;z-index:9999;';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+      };
+
+      // Clear/reset employee's shift data for a date
+      const handleClearShift = () => {
+        if (!dataReady) {
+          alert('Please wait for data to load.');
+          return;
+        }
+        if (!confirm('Clear your start time for this date?')) return;
+
+        const key = dateKey(modalDate);
+        const existingEntry = (employeeData[user.username] || {})[key] || {};
+
+        // OWNERSHIP RULE: busser clear removes only busser-owned start fields.
+        // Admin-owned data (cut times, banquet flags) must survive.
+        const hasAdminData = existingEntry.endTimeOverride || existingEntry.isBanquetWorker || existingEntry.isExtraBusser;
+
+        let newUserData;
+        let firebaseUserData;
+
+        if (hasAdminData) {
+          // Keep the entry, strip only the start selection
+          const strippedClean = { ...existingEntry };
+          delete strippedClean.startTime;
+          delete strippedClean.startTime_timestamp;
+
+          newUserData = { ...(employeeData[user.username] || {}), [key]: strippedClean };
+          firebaseUserData = {
+            ...(employeeData[user.username] || {}),
+            [key]: {
+              ...strippedClean,
+              startTime: window.firestoreDeleteField(),
+              startTime_timestamp: window.firestoreDeleteField()
+            }
+          };
+        } else {
+          // Nothing admin-owned here — remove the whole entry
+          newUserData = { ...(employeeData[user.username] || {}) };
+          delete newUserData[key];
+          firebaseUserData = {
+            ...(employeeData[user.username] || {}),
+            [key]: window.firestoreDeleteField()
+          };
+        }
+
+        setEmployeeData({ ...employeeData, [user.username]: newUserData });
+        saveData('employeeData', { ...employeeData, [user.username]: firebaseUserData });
+
+        setShowAddShiftModal(false);
+        alert('✓ Start time cleared');
+      };
+
+      const updateDayData = (date, field, value) => {
+        const key = dateKey(date);
+        setLocalData(prev => {
+          const newDayData = { ...prev[key] };
+
+          // If value is empty string or just whitespace, delete the field instead of setting it
+          if (!value || (typeof value === 'string' && value.trim() === '')) {
+            delete newDayData[field];
+            // Also delete the timestamp for this field
+            delete newDayData[field + '_timestamp'];
+          } else {
+            // Trim time override values to ensure clean data
+            if ((field === 'startTimeOverride' || field === 'endTimeOverride') && typeof value === 'string') {
+              newDayData[field] = value.trim();
+            } else {
+              newDayData[field] = value;
+            }
+            // Add timestamp for this field change
+            newDayData[field + '_timestamp'] = Date.now();
+          }
+
+          return {
+            ...prev,
+            [key]: newDayData
+          };
+        });
+      };
+
+      // Calculate tip for a day
+      const calculateDayTip = (date) => {
+        const key = dateKey(date);
+        const shift = shiftData[key];
+        const rawDayData = localData[key];
+
+        // ONLY use data with savedAt timestamp (ignore old data)
+        const dayData = rawDayData?.savedAt ? rawDayData : null;
+
+        if (!shift || !shift.totalTips || !shift.endTime) return null;
+
+        // ---- MY START ----
+        // Priority: admin-entered extra in-time > banquet in-time > my 10/12 pick > legacy override
+        const extraEntry = (shift.extraBussers || []).find(e => e && e.name === user.username);
+
+        let startTime = null;
+        if (extraEntry && extraEntry.inTime) {
+          startTime = extraEntry.inTime;
+        } else if (dayData && dayData.isBanquetWorker && dayData.startTimeOverride) {
+          startTime = dayData.startTimeOverride;
+        } else if (dayData) {
+          const hasOverride = dayData.startTimeOverride && dayData.startTimeOverride.trim() !== '';
+          const hasDropdown = dayData.startTime;
+          if (hasOverride && hasDropdown) {
+            // LEGACY: old self-set custom starts — most recent wins
+            const overrideTime = dayData.startTimeOverride_timestamp || 0;
+            const dropdownTime = dayData.startTime_timestamp || 0;
+            if (overrideTime > dropdownTime) startTime = dayData.startTimeOverride;
+            else if (dayData.startTime === '10') startTime = '10:00 PM';
+            else if (dayData.startTime === '12') startTime = '12:00 AM';
+          } else if (hasOverride) {
+            startTime = dayData.startTimeOverride;
+          } else if (hasDropdown) {
+            if (dayData.startTime === '10') startTime = '10:00 PM';
+            else if (dayData.startTime === '12') startTime = '12:00 AM';
+          }
+        }
+
+        if (!startTime) return null;
+
+        // ---- MY END ---- admin-set cut wins over shift close
+        let endTime = shift.endTime;
+        if (dayData && dayData.endTimeOverride && dayData.endTimeOverride.trim() !== '') {
+          endTime = dayData.endTimeOverride;
+        }
+
+        // ---- POOL ---- single source of truth
+        const pool = computeShiftPool(shift, employeeData, key);
+        if (!pool) return null;
+
+        const myHours = calculateHours(startTime, endTime);
+        const myTip = pool.perHour * myHours;
+
+        return { myTip, myHours, perHour: pool.perHour };
+      };
+
+      // Calculate totals
+      const totals = dates.reduce((acc, date) => {
+        const result = calculateDayTip(date);
+        if (result) {
+          acc.hours += result.myHours;
+          acc.tips += result.myTip;
+        }
+        return acc;
+      }, { hours: 0, tips: 0 });
+
+      return (
+        <div style={styles.container}>
+          <header style={styles.header}>
+            <div>
+              <h1 style={styles.headerTitle}>LIV Tips</h1>
+              <p style={styles.headerSubtitle}>Welcome, {user.username}</p>
+            </div>
+            <button onClick={onLogout} style={styles.logoutBtn}>Logout</button>
+          </header>
+          
+          <div style={styles.content}>
+            <div style={styles.periodCard}>
+              <div style={styles.periodNav}>
+                <button 
+                  onClick={() => setPeriodOffset(periodOffset - 1)}
+                  style={styles.periodNavBtn}
+                >
+                  ← Prev
+                </button>
+                <div style={styles.periodInfo}>
+                  <h2 style={styles.periodTitle}>
+                    {isCurrentPeriod ? 'Current Pay Period' : 'Pay Period'}
+                  </h2>
+                  <p style={styles.periodDates}>
+                    {formatDate(startDate, 'long')} — {formatDate(endDate, 'long')}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setPeriodOffset(periodOffset + 1)}
+                  style={styles.periodNavBtn}
+                >
+                  Next →
+                </button>
+              </div>
+              {!isCurrentPeriod && (
+                <button 
+                  onClick={() => setPeriodOffset(0)}
+                  style={styles.goToCurrentBtn}
+                >
+                  Go to Current Period
+                </button>
+              )}
+            </div>
+            
+            <div style={styles.tableContainer}>
+              <div style={styles.tableHeader}>
+                <span>Date</span>
+                <span>Start</span>
+                <span>End</span>
+                <span style={{textAlign: 'right'}}>Tips</span>
+              </div>
+              
+              {dates.map(date => {
+                const key = dateKey(date);
+                const shift = shiftData[key];
+                const rawDayData = localData[key] || {};
+
+                // ONLY use data that has savedAt timestamp (new system)
+                // Ignore old data without savedAt
+                const dayData = rawDayData.savedAt ? rawDayData : {};
+
+                const result = calculateDayTip(date);
+                const isToday = dateKey(date) === dateKey(today);
+
+                const hasShiftData = dayData.startTime || dayData.startTimeOverride;
+
+                return (
+                  <div key={key} style={{...(isMobile ? styles.tableRowMobile : styles.tableRow), ...(isToday ? styles.tableRowToday : {})}}>
+                    <span style={styles.colDate}>
+                      <span style={styles.dateText}>{formatDate(date)}</span>
+                      <span style={styles.dayText}>
+                        {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                      </span>
+                    </span>
+
+                    {!hasShiftData ? (
+                      <div style={{gridColumn: '2 / 5', display: 'flex', justifyContent: 'center'}}>
+                        <button
+                          onClick={() => openAddShiftModal(date)}
+                          style={styles.addShiftBtn}
+                        >
+                          Add Shift
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={styles.colTime}>
+                          <span style={{fontSize: isMobile ? '11px' : '13px'}} onClick={() => openAddShiftModal(date)}>
+                            {dayData.startTimeOverride || (dayData.startTime === '10' ? '10 PM' : dayData.startTime === '12' ? '12 AM' : '--')}
+                          </span>
+                        </div>
+
+                        <div style={styles.colTime}>
+                          <span style={{fontSize: isMobile ? '11px' : '13px', color: '#888899'}} onClick={() => openAddShiftModal(date)}>
+                            {dayData.endTimeOverride || shift?.endTime || '--'}
+                          </span>
+                        </div>
+
+                        <span style={styles.colTip}>
+                          {result ? (
+                            <span style={styles.tipAmount}>${result.myTip.toFixed(2)}</span>
+                          ) : (
+                            <span style={styles.tipEmpty}>--</span>
+                          )}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div style={styles.totalsCard}>
+              <div style={styles.totalItem}>
+                <span style={styles.totalLabel}>Total Hours</span>
+                <span style={styles.totalValue}>{formatHours(totals.hours)}</span>
+              </div>
+              <div style={styles.totalDivider} />
+              <div style={styles.totalItem}>
+                <span style={styles.totalLabel}>Total Tips</span>
+                <span style={styles.totalValueHighlight}>${totals.tips.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Add Shift Modal */}
+            {showAddShiftModal && (
+              <div style={styles.modal}>
+                <div style={styles.modalContent}>
+                  <h2 style={styles.modalTitle}>Add Shift - {formatDate(modalDate)}</h2>
+
+                  <div style={styles.modalSection}>
+                    <label style={styles.modalLabel}>Start Shift Time</label>
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="startTime"
+                          value="10"
+                          checked={modalStartTime === '10'}
+                          onChange={() => setModalStartTime('10')}
+                        />
+                        <span style={{marginLeft: '8px'}}>10 PM</span>
+                      </label>
+                      <label style={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="startTime"
+                          value="12"
+                          checked={modalStartTime === '12'}
+                          onChange={() => setModalStartTime('12')}
+                        />
+                        <span style={{marginLeft: '8px'}}>12 AM</span>
+                      </label>
+                    </div>
+                    <p style={{...styles.hint, marginTop: '12px'}}>
+                      Different in-time or got cut early? Admin enters those.
+                    </p>
+                  </div>
+
+                  <div style={{display: 'flex', gap: '12px', marginTop: '24px'}}>
+                    <button onClick={() => setShowAddShiftModal(false)} style={styles.secondaryBtn}>
+                      Cancel
+                    </button>
+                    <button onClick={handleSaveShift} style={styles.primaryBtn}>
+                      Save
+                    </button>
+                  </div>
+
+                  {/* Clear/Reset button */}
+                  {localData[dateKey(modalDate)]?.savedAt && (
+                    <button
+                      onClick={handleClearShift}
+                      style={{
+                        ...styles.secondaryBtn,
+                        width: '100%',
+                        marginTop: '12px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        color: '#ef4444'
+                      }}
+                    >
+                      Clear / Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Admin Login Modal
+    function AdminLogin({ onSuccess, onCancel }) {
+      const [password, setPassword] = useState('');
+      const [error, setError] = useState('');
+      const ADMIN_PASSWORD = 'admin123'; // Change this!
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (password === ADMIN_PASSWORD) {
+          onSuccess();
+        } else {
+          setError('Invalid admin password');
+        }
+      };
+
+      return (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <h2 style={styles.modalTitle}>Admin Access</h2>
+            <form onSubmit={handleSubmit}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Admin Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={styles.input}
+                  placeholder="Enter admin password"
+                  autoFocus
+                />
+              </div>
+              {error && <p style={styles.error}>{error}</p>}
+              <div style={styles.modalButtons}>
+                <button type="button" onClick={onCancel} style={{...styles.secondaryBtn, flex: 1}}>
+                  Cancel
+                </button>
+                <button type="submit" style={{...styles.primaryBtn, flex: 1}}>
+                  Access
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================
+    // SUPERVISOR DASHBOARD
+    // Read-only: supervisors enter nothing. Admin controls who worked and cuts.
+    // Pay = busser tips/hr × 1.20 × hours (9:30 PM or banquet-in → close or cut).
+    // ============================================
+    function SupervisorDashboard({ user, shiftData, employeeData, setEmployeeData, onLogout }) {
+      const today = getBusinessDay();
+      const [periodOffset, setPeriodOffset] = useState(0);
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+      // Times entry modal state — supervisor enters BOTH their in and out
+      const [clockDate, setClockDate] = useState(null);
+      const [inHour, setInHour] = useState('');
+      const [inMin, setInMin] = useState('00');
+      const [inPeriod, setInPeriod] = useState('PM');
+      const [outHour, setOutHour] = useState('');
+      const [outMin, setOutMin] = useState('00');
+      const [outPeriod, setOutPeriod] = useState('AM');
+
+      const getOffsetPayPeriod = (offset) => {
+        const baseDate = new Date(today);
+        baseDate.setDate(baseDate.getDate() + (offset * PAY_PERIOD_DAYS));
+        return getPayPeriod(baseDate);
+      };
+
+      const { startDate, endDate } = getOffsetPayPeriod(periodOffset);
+      const dates = getDatesInPeriod(startDate, endDate);
+
+      const dayResult = (date) => {
+        const key = dateKey(date);
+        return computeSupervisorShift(shiftData[key], employeeData, key, user.id, user.username);
+      };
+
+      const totals = dates.reduce((acc, date) => {
+        const r = dayResult(date);
+        if (r && !r.pending) {
+          acc.hours += r.hours;
+          acc.tips += r.amount;
+        }
+        return acc;
+      }, { hours: 0, tips: 0 });
+
+      const pendingCount = dates.reduce((n, date) => {
+        const r = dayResult(date);
+        return n + (r && r.pending ? 1 : 0);
+      }, 0);
+
+      // Open the times entry for a date, prefilling whatever is already set
+      const openTimes = (date) => {
+        const key = dateKey(date);
+        const existing = (employeeData[user.username] || {})[key] || {};
+        const mi = (existing.supervisorClockIn || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (mi) { setInHour(mi[1]); setInMin(mi[2]); setInPeriod(mi[3].toUpperCase()); }
+        else { setInHour(''); setInMin('00'); setInPeriod('PM'); }
+        const mo = (existing.supervisorClockOut || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (mo) { setOutHour(mo[1]); setOutMin(mo[2]); setOutPeriod(mo[3].toUpperCase()); }
+        else { setOutHour(''); setOutMin('00'); setOutPeriod('AM'); }
+        setClockDate(date);
+      };
+
+      // Supervisor writes ONLY their own in/out. Never deletes, never touches admin fields.
+      const saveTimes = () => {
+        if (!inHour || !outHour) return;
+        const key = dateKey(clockDate);
+        const inTime = `${inHour}:${inMin.toString().padStart(2, '0')} ${inPeriod}`;
+        const outTime = `${outHour}:${outMin.toString().padStart(2, '0')} ${outPeriod}`;
+        const existingEntry = (employeeData[user.username] || {})[key] || {};
+        const merged = { ...existingEntry, supervisorClockIn: inTime, supervisorClockOut: outTime, savedAt: Date.now() };
+        const newEmployeeData = {
+          ...employeeData,
+          [user.username]: { ...(employeeData[user.username] || {}), [key]: merged }
+        };
+        setEmployeeData(newEmployeeData);
+        saveData('employeeData', newEmployeeData);
+        setClockDate(null);
+      };
+
+      // Delete the supervisor's own times for this shift so they can start over.
+      // Removes ONLY supervisorClockIn/supervisorClockOut. If nothing else is on the
+      // entry, the whole date is removed. Uses deleteField() because saves merge.
+      const deleteTimes = () => {
+        const key = dateKey(clockDate);
+        const existingEntry = (employeeData[user.username] || {})[key] || {};
+        if (!confirm('Delete your times for this shift? You can re-enter them after.')) return;
+
+        const otherKeys = Object.keys(existingEntry).filter(
+          k => !['savedAt', 'supervisorClockIn', 'supervisorClockOut'].includes(k)
+        );
+
+        let reactUserData = { ...(employeeData[user.username] || {}) };
+        let firebaseEntry;
+
+        if (otherKeys.length > 0) {
+          // Preserve other fields (e.g. legacy data); strip only our two times
+          const stripped = { ...existingEntry };
+          delete stripped.supervisorClockIn;
+          delete stripped.supervisorClockOut;
+          reactUserData[key] = stripped;
+          firebaseEntry = {
+            ...stripped,
+            supervisorClockIn: window.firestoreDeleteField(),
+            supervisorClockOut: window.firestoreDeleteField()
+          };
+        } else {
+          // Nothing else here — remove the whole date entry
+          delete reactUserData[key];
+          firebaseEntry = window.firestoreDeleteField();
+        }
+
+        setEmployeeData({ ...employeeData, [user.username]: reactUserData });
+        saveData('employeeData', {
+          ...employeeData,
+          [user.username]: { ...(employeeData[user.username] || {}), [key]: firebaseEntry }
+        });
+        setClockDate(null);
+      };
+
+      // Whether the currently-open shift already has saved times (gates Delete button)
+      const modalExisting = clockDate ? ((employeeData[user.username] || {})[dateKey(clockDate)] || {}) : {};
+      const hasSavedTimes = !!(modalExisting.supervisorClockIn || modalExisting.supervisorClockOut);
+
+      return (
+        <div style={styles.container}>
+          <header style={styles.header}>
+            <div>
+              <h1 style={styles.headerTitle}>LIV Tips</h1>
+              <p style={styles.headerSubtitle}>Welcome, {user.username} · Supervisor</p>
+            </div>
+            <button onClick={onLogout} style={styles.logoutBtn}>Logout</button>
+          </header>
+
+          <div style={styles.content}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+              <button onClick={() => setPeriodOffset(periodOffset - 1)} style={styles.secondaryBtn}>←</button>
+              <span style={{fontSize: '14px', color: '#888899'}}>
+                {formatDate(startDate)} – {formatDate(endDate)}{periodOffset === 0 ? ' (current)' : ''}
+              </span>
+              <button
+                onClick={() => setPeriodOffset(periodOffset + 1)}
+                style={{...styles.secondaryBtn, ...(periodOffset >= 0 ? { opacity: 0.4 } : {})}}
+                disabled={periodOffset >= 0}
+              >
+                →
+              </button>
+            </div>
+
+            {pendingCount > 0 && (
+              <div style={{
+                padding: '12px 16px', marginBottom: '16px', borderRadius: '10px',
+                background: 'rgba(255, 200, 87, 0.1)', border: '1px solid rgba(255, 200, 87, 0.3)',
+                color: '#ffc857', fontSize: '13px'
+              }}>
+                {pendingCount} shift{pendingCount > 1 ? 's need' : ' needs'} your in and out times before pay can be calculated. Tap a shift below to add them.
+              </div>
+            )}
+
+            <div style={styles.card}>
+              {dates.map(date => {
+                const r = dayResult(date);
+                const isToday = dateKey(date) === dateKey(today);
+                if (!r) return (
+                  <div key={dateKey(date)} style={{...(isMobile ? styles.tableRowMobile : styles.tableRow), ...(isToday ? styles.tableRowToday : {}), opacity: 0.45}}>
+                    <span style={styles.colDate}>
+                      <span style={styles.dateText}>{formatDate(date)}</span>
+                      <span style={styles.dayText}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                    </span>
+                    <div style={{gridColumn: '2 / 5', textAlign: 'center', fontSize: '12px', color: '#888899'}}>—</div>
+                  </div>
+                );
+                return (
+                  <div key={dateKey(date)} style={{...(isMobile ? styles.tableRowMobile : styles.tableRow), ...(isToday ? styles.tableRowToday : {})}}>
+                    <span style={styles.colDate}>
+                      <span style={styles.dateText}>{formatDate(date)}</span>
+                      <span style={styles.dayText}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                    </span>
+                    {r.pending ? (
+                      <div style={{gridColumn: '2 / 4', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                        <button onClick={() => openTimes(date)} style={{...styles.secondaryBtn, padding: '6px 12px', fontSize: '12px'}}>
+                          + set in & out
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={styles.colTime}>
+                          <span style={{fontSize: isMobile ? '11px' : '13px', cursor: 'pointer'}} onClick={() => openTimes(date)}>
+                            {r.inTime}
+                          </span>
+                        </div>
+                        <div style={styles.colTime}>
+                          <span style={{fontSize: isMobile ? '11px' : '13px', color: '#888899', cursor: 'pointer'}} onClick={() => openTimes(date)}>
+                            {r.outTime}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    <span style={styles.colTip}>
+                      {r.pending ? (
+                        <span style={{fontSize: '12px', color: '#ffc857'}}>pending</span>
+                      ) : (
+                        <span style={styles.tipAmount}>${r.amount.toFixed(2)}</span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={styles.totalsCard}>
+              <div style={styles.totalItem}>
+                <span style={styles.totalLabel}>Total Hours</span>
+                <span style={styles.totalValue}>{formatHours(totals.hours)}</span>
+              </div>
+              <div style={styles.totalDivider} />
+              <div style={styles.totalItem}>
+                <span style={styles.totalLabel}>Total Tips</span>
+                <span style={styles.totalValueHighlight}>${totals.tips.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <p style={{fontSize: '12px', color: '#888899', textAlign: 'center', marginTop: '16px'}}>
+              Rate = busser tips/hr × 1.20 · You enter your own in and out times
+            </p>
+          </div>
+
+          {clockDate && (
+            <div style={styles.modal}>
+              <div style={styles.modalContent}>
+                <h2 style={styles.modalTitle}>Your Times</h2>
+                <p style={{...styles.subTitle, marginBottom: '20px'}}>
+                  {formatDate(clockDate, 'long')}
+                </p>
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>What time did you clock in?</label>
+                  <div style={styles.timeInputGroup}>
+                    <input
+                      type="number" placeholder="Hr" min="1" max="12"
+                      value={inHour}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || (parseInt(val) >= 1 && parseInt(val) <= 12)) setInHour(val);
+                      }}
+                      style={{...styles.input, flex: 1, textAlign: 'center'}}
+                    />
+                    <span style={{color: '#888899', fontSize: '24px', alignSelf: 'center'}}>:</span>
+                    <input
+                      type="number" placeholder="Min" min="0" max="59"
+                      value={inMin}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 59)) setInMin(val);
+                      }}
+                      style={{...styles.input, flex: 1, textAlign: 'center'}}
+                    />
+                    <select
+                      value={inPeriod}
+                      onChange={(e) => setInPeriod(e.target.value)}
+                      style={{...styles.select, width: '80px'}}
+                    >
+                      <option value="PM">PM</option>
+                      <option value="AM">AM</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>What time did you clock out?</label>
+                  <div style={styles.timeInputGroup}>
+                    <input
+                      type="number" placeholder="Hr" min="1" max="12"
+                      value={outHour}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || (parseInt(val) >= 1 && parseInt(val) <= 12)) setOutHour(val);
+                      }}
+                      style={{...styles.input, flex: 1, textAlign: 'center'}}
+                    />
+                    <span style={{color: '#888899', fontSize: '24px', alignSelf: 'center'}}>:</span>
+                    <input
+                      type="number" placeholder="Min" min="0" max="59"
+                      value={outMin}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 59)) setOutMin(val);
+                      }}
+                      style={{...styles.input, flex: 1, textAlign: 'center'}}
+                    />
+                    <select
+                      value={outPeriod}
+                      onChange={(e) => setOutPeriod(e.target.value)}
+                      style={{...styles.select, width: '80px'}}
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{display: 'flex', gap: '12px', marginTop: '20px'}}>
+                  <button onClick={() => setClockDate(null)} style={{...styles.secondaryBtn, flex: 1}}>Cancel</button>
+                  <button
+                    onClick={saveTimes}
+                    disabled={!inHour || !outHour}
+                    style={{...styles.primaryBtn, flex: 1, ...((!inHour || !outHour) && styles.primaryBtnDisabled)}}
+                  >
+                    Save
+                  </button>
+                </div>
+                {hasSavedTimes && (
+                  <button
+                    onClick={deleteTimes}
+                    style={{
+                      width: '100%', marginTop: '12px', padding: '10px',
+                      background: 'transparent', color: '#f87171',
+                      border: '1px solid rgba(248, 113, 113, 0.4)', borderRadius: '10px',
+                      fontSize: '13px', cursor: 'pointer'
+                    }}
+                  >
+                    Delete these times
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Main App Component
+    // Track if data has been loaded from Firebase (prevents saving empty data)
+    window.dataLoaded = {
+      shiftData: false,
+      employeeData: false,
+      employeeList: false
+    };
+
+    function LIVTipsApp() {
+      const [currentUser, setCurrentUser] = useState(null);
+      const [shiftData, setShiftData] = useState({});
+      const [employeeData, setEmployeeData] = useState({});
+      const [showAdminLogin, setShowAdminLogin] = useState(false);
+      const [dataReady, setDataReady] = useState(false); // Track when Firebase data is actually in React state
+      const [isAdmin, setIsAdmin] = useState(false);
+      const [loading, setLoading] = useState(true);
+      const [employeeList, setEmployeeList] = useState([]);
+
+      // Load data from Firebase on mount and listen for real-time updates
+      useEffect(() => {
+        const unsubscribers = [];
+
+        // Version check — forces all open sessions to reload when a new version is deployed
+        const metaRef = window.firestoreDoc(window.firebaseDb, 'appData', 'meta');
+        const unsubMeta = window.firestoreOnSnapshot(metaRef, (doc) => {
+          const fromCache = doc.metadata ? doc.metadata.fromCache : false;
+          const firestoreVersion = doc.exists() ? (doc.data().appVersion || 0) : 0;
+          console.log(`🔖 Version check — app: v${window.APP_VERSION}, firestore: v${firestoreVersion}, fromCache: ${fromCache}`);
+          if (firestoreVersion > window.APP_VERSION) {
+            // This session is outdated — force reload to get the new version
+            console.warn(`🔄 New version detected (v${firestoreVersion} > v${window.APP_VERSION}) — reloading...`);
+            window.location.reload();
+          } else if (window.APP_VERSION > firestoreVersion) {
+            // This session has the newest version — update Firestore so old sessions reload
+            console.log(`📢 Publishing new version v${window.APP_VERSION} to Firestore (was v${firestoreVersion})`);
+            window.firestoreSetDoc(metaRef, { appVersion: window.APP_VERSION }, { merge: true });
+          }
+        });
+        unsubscribers.push(unsubMeta);
+
+        // Listen to shiftData changes
+        const shiftDataRef = window.firestoreDoc(window.firebaseDb, 'appData', 'shiftData');
+        const unsubShiftData = window.firestoreOnSnapshot(shiftDataRef, (doc) => {
+          window.dataLoaded.shiftData = true; // Mark as loaded BEFORE setting state
+          if (doc.exists()) {
+            const data = doc.data().value || {};
+            console.log('📥 Firebase shiftData loaded:', Object.keys(data).length, 'entries');
+            setShiftData(data);
+          } else {
+            console.log('⚠️ No shiftData document exists in Firebase');
+          }
+        });
+        unsubscribers.push(unsubShiftData);
+
+        // Listen to employeeData changes
+        const employeeDataRef = window.firestoreDoc(window.firebaseDb, 'appData', 'employeeData');
+        const unsubEmployeeData = window.firestoreOnSnapshot(employeeDataRef, (doc) => {
+          window.dataLoaded.employeeData = true; // Mark as loaded BEFORE setting state
+          if (doc.exists()) {
+            const data = doc.data().value || {};
+            logger.log('info', '🔄 Firebase employeeData updated', data);
+            setEmployeeData(data);
+            // Mark data as ready after state is set (setTimeout ensures state update completes)
+            setTimeout(() => setDataReady(true), 100);
+          } else {
+            logger.log('warning', '⚠️ No employeeData document in Firebase');
+            setTimeout(() => setDataReady(true), 100);
+          }
+        });
+        unsubscribers.push(unsubEmployeeData);
+
+        // Listen to employeeList changes
+        // ROSTER ISOLATION (permanent drift fix): the employee roster lives in
+        // 'rosterV2', a document that OLD cached versions of this app do not know
+        // about — they read/write the legacy 'employeeList' doc, which nothing here
+        // reads anymore. That makes a stale device physically unable to overwrite the
+        // live roster: its clobbering writes land on a dead document. Combined with
+        // the server-authoritative add/remove transactions, no client (old or new)
+        // can revert this list.
+        const employeeListRef = window.firestoreDoc(window.firebaseDb, 'appData', 'rosterV2');
+        const unsubEmployeeList = window.firestoreOnSnapshot(employeeListRef, (doc) => {
+          const fromCache = doc.metadata ? doc.metadata.fromCache : true;
+          if (doc.exists()) {
+            const storedEmployees = doc.data().value;
+            if (storedEmployees && Array.isArray(storedEmployees) && storedEmployees.length > 0) {
+              // Valid data from Firestore — display it. This listener NEVER writes back;
+              // the only writes to employeeList come from the add/remove transactions.
+              // (The old code merged missing supervisors here and wrote on load, which
+              // was an extra clobber path — supervisors now live permanently in the doc.)
+              window.dataLoaded.employeeList = true;
+              console.log(`✅ [employeeList] Loaded ${storedEmployees.length} employees (fromCache: ${fromCache})`);
+              setEmployeeList(storedEmployees);
+            } else {
+              // Document exists but data is empty/invalid — glitch, keep current state, never overwrite
+              console.warn(`⚠️ [employeeList] Document exists but data is empty/invalid (fromCache: ${fromCache}) — ignoring, not overwriting Firestore`);
+            }
+          } else if (fromCache) {
+            // THE OLD BUG LIVED HERE: an offline/local-cache snapshot says the doc is "missing",
+            // the app seeded the hardcoded list, and when signal returned that write overwrote
+            // the real list (removing added employees, restoring removed ones).
+            // A cache miss is NOT proof the document doesn't exist on the server. Do nothing;
+            // Firestore will fire this listener again with the server answer.
+            console.warn(`⚠️ [employeeList] Doc missing in LOCAL CACHE only — waiting for server, NOT seeding`);
+          } else {
+            // Server itself confirms the document has never been created — true first-time setup
+            window.dataLoaded.employeeList = true;
+            console.warn(`⚠️ [employeeList] Server confirms document does not exist — seeding default list`);
+            setEmployeeList(EMPLOYEES);
+            saveData('rosterV2', EMPLOYEES);
+          }
+          setLoading(false);
+        }, (error) => {
+          console.error('🚫 [employeeList] Firestore snapshot error:', error.code, error.message);
+          setLoading(false);
+        });
+        unsubscribers.push(unsubEmployeeList);
+
+        // Cleanup listeners on unmount
+        return () => {
+          unsubscribers.forEach(unsub => unsub());
+        };
+      }, []);
+
+      const handleLogin = (username, employeeId, role) => {
+        if (username === '__ADMIN__') {
+          setShowAdminLogin(true);
+          return;
+        }
+
+        setCurrentUser({ username, id: employeeId, role });
+      };
+
+      const handleLogout = () => {
+        setCurrentUser(null);
+        setIsAdmin(false);
+      };
+
+      if (loading) {
+        return (
+          <div style={{...styles.loginContainer, background: styles.container.background}}>
+            <div style={{textAlign: 'center', color: '#888899'}}>
+              <div style={{fontSize: '48px', marginBottom: '16px'}}>💰</div>
+              <p>Loading LIV Tips...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (showAdminLogin) {
+        return (
+          <AdminLogin
+            onSuccess={() => { setShowAdminLogin(false); setIsAdmin(true); }}
+            onCancel={() => setShowAdminLogin(false)}
+          />
+        );
+      }
+
+      if (isAdmin) {
+        return (
+          <AdminPanel
+            shiftData={shiftData}
+            setShiftData={setShiftData}
+            employeeData={employeeData}
+            setEmployeeData={setEmployeeData}
+            employeeList={employeeList}
+            setEmployeeList={setEmployeeList}
+            onLogout={handleLogout}
+          />
+        );
+      }
+
+      if (!currentUser) {
+        return <Login onLogin={handleLogin} employeeList={employeeList} />;
+      }
+
+      if (currentUser.role === 'supervisor') {
+        return (
+          <SupervisorDashboard
+            user={currentUser}
+            shiftData={shiftData}
+            employeeData={employeeData}
+            setEmployeeData={setEmployeeData}
+            onLogout={handleLogout}
+          />
+        );
+      }
+
+      return (
+        <EmployeeDashboard
+          user={currentUser}
+          shiftData={shiftData}
+          employeeData={employeeData}
+          setEmployeeData={setEmployeeData}
+          onLogout={handleLogout}
+          dataReady={dataReady}
+        />
+      );
+    }
+
+    // Render the app
+    ReactDOM.createRoot(document.getElementById('root')).render(<LIVTipsApp />);
+  </script>
+</body>
+</html>

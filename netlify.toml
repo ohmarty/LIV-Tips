@@ -1,0 +1,21 @@
+[build]
+  command = "node -e \"const fs=require('fs');let h=fs.readFileSync('index.html','utf8');h=h.replace(/window\\.APP_VERSION = \\d+/, 'window.APP_VERSION = '+Date.now());fs.writeFileSync('index.html',h);console.log('Stamped APP_VERSION '+Date.now())\""
+  publish = "."
+
+# Never let a browser or installed PWA serve a stale index.html. This forces every
+# open to revalidate the HTML, so devices pick up new deploys instead of running old
+# cached code — the thing that kept clobbering the roster.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+
+[[headers]]
+  for = "/logger.js"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
