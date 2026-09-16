@@ -95,7 +95,7 @@
   
   <!-- Firebase SDKs -->
   <script type="module">
-    window.APP_VERSION = 1785883153627; // Auto-replaced by Netlify build on every deploy
+    window.APP_VERSION = 1787239040228; // Auto-replaced by Netlify build on every deploy
     console.log('🚀 LIV Tips v' + window.APP_VERSION + ' loaded at', new Date().toISOString());
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteField, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -435,6 +435,86 @@
 
       const hours = calculateHours(inTime, outTime);
       return { inTime, outTime, hours, rate, amount: rate * hours, busserRate: pool.perHour, pending: false };
+    }
+
+
+    // ============================================
+    // PERFORMERS
+    // Stored on each night's shift record as shift.performers = ['Name', ...].
+    // The searchable name list is built from every saved night (plus the
+    // imported history below), so there is no separate list to fall out of sync.
+    // ============================================
+
+    // Past lineups Jan 23 – Sep 13, 2026 (source: concertarchives.org,
+    // Mar 25 corrected to Carlita by Martin). Used by the one-time admin import
+    // and to seed the search suggestions.
+    const HISTORICAL_PERFORMERS = {"2026-01-23": ["Steve Aoki"], "2026-01-24": ["Frank Walker", "Arty"], "2026-01-25": ["2 Chainz"], "2026-01-28": ["Ian Asher"], "2026-01-30": ["French Montana"], "2026-01-31": ["Layton Giordani"], "2026-02-06": ["Lil Tjay"], "2026-02-07": ["Sonny Fodera"], "2026-02-08": ["Kevin Gates"], "2026-02-14": ["Gryffin"], "2026-02-15": ["Yung Miami"], "2026-02-19": ["Omar Courtz"], "2026-02-20": ["DJ Khaled"], "2026-02-21": ["Cedric Gervais"], "2026-02-28": ["Ian Asher"], "2026-03-01": ["42 Dugg"], "2026-03-03": ["Odd Mob"], "2026-03-05": ["Bad Gyal"], "2026-03-07": ["Two Friends"], "2026-03-12": ["Alofoke"], "2026-03-13": ["Alok"], "2026-03-14": ["Loud Luxury"], "2026-03-15": ["Quavo"], "2026-03-18": ["TWINSICK"], "2026-03-25": ["Carlita"], "2026-03-26": ["PAWSA"], "2026-03-27": ["Black Coffee"], "2026-03-28": ["ADRIATIQUE"], "2026-03-29": ["Lil Baby"], "2026-04-03": ["Lil Tjay"], "2026-04-04": ["Dombresky"], "2026-04-05": ["Swae Lee"], "2026-04-10": ["T.I."], "2026-04-11": ["DJ Khaled"], "2026-04-17": ["Big Sean"], "2026-04-18": ["MK"], "2026-04-19": ["NLE Choppa"], "2026-04-25": ["Sidepiece"], "2026-04-30": ["James Hype"], "2026-05-01": ["ADRIATIQUE"], "2026-05-02": ["John Summit"], "2026-05-03": ["50 Cent"], "2026-05-06": ["TWINSICK"], "2026-05-08": ["Steve Aoki"], "2026-05-09": ["BUNT."], "2026-05-15": ["Ty Dolla $ign"], "2026-05-16": ["MORTEN"], "2026-05-17": ["Francis Mercier", "Michael Brun"], "2026-05-21": ["Pedro Sampaio"], "2026-05-22": ["Lil Baby"], "2026-05-23": ["Two Friends"], "2026-05-24": ["DaBaby"], "2026-05-29": ["Jason Derulo"], "2026-05-30": ["Mathame"], "2026-05-31": ["Sexyy Red"], "2026-06-04": ["La Joaqui"], "2026-06-05": ["French Montana"], "2026-06-06": ["Cedric Gervais"], "2026-06-13": ["MK"], "2026-06-20": ["Massano"], "2026-06-26": ["Gorgon City"], "2026-06-27": ["Juliana"], "2026-07-02": ["Steve Aoki"], "2026-07-03": ["Young Thug"], "2026-07-04": ["Loud Luxury"], "2026-07-10": ["Pedro Sampaio"], "2026-07-12": ["Curren$y", "Miles Minnick", "sosocamo", "La Reezy", "Skrilla", "Chris Patrick", "BabyFxce E", "Slayr"], "2026-07-23": ["Bebeshito"], "2026-07-25": ["Ian Asher"], "2026-07-31": ["Galantis"], "2026-08-07": ["DJ Khaled"], "2026-08-08": ["Kettama"], "2026-08-14": ["DJ Pauly D"], "2026-08-15": ["Nicky Romero"], "2026-08-22": ["Loud Luxury"], "2026-08-28": ["French Montana"], "2026-08-29": ["Two Friends"], "2026-09-04": ["Fetty Wap"], "2026-09-05": ["Disco Lines"], "2026-09-06": ["Lil Baby"], "2026-09-11": ["Soulja Boy"], "2026-09-13": ["Sheck Wes"]};
+
+    function normalizePerformer(name) {
+      return (name || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
+    function getShiftPerformers(shift) {
+      return (shift && Array.isArray(shift.performers)) ? shift.performers.filter(Boolean) : [];
+    }
+
+    // Every performer name ever used, unique (case-insensitive), A–Z
+    function getAllPerformerNames(shiftData) {
+      const map = {};
+      const add = (n) => {
+        const k = normalizePerformer(n);
+        if (k && !map[k]) map[k] = n.trim().replace(/\s+/g, ' ');
+      };
+      Object.values(shiftData || {}).forEach(shift => getShiftPerformers(shift).forEach(add));
+      Object.values(HISTORICAL_PERFORMERS).forEach(list => list.forEach(add));
+      return Object.values(map).sort((a, b) => a.localeCompare(b));
+    }
+
+    // Full-shift tip-out for the night: per-hour rate × (10 PM → close) and (12 AM → close).
+    // Uses the same pool math as everything else. Early cuts are NOT applied here,
+    // so nights compare fairly.
+    function computeShiftTipouts(shift, employeeData, key) {
+      const pool = computeShiftPool(shift, employeeData, key);
+      if (!pool) return null;
+      return {
+        tip10: pool.perHour * calculateHours('10:00 PM', shift.endTime),
+        tip12: pool.perHour * calculateHours('12:00 AM', shift.endTime),
+        perHour: pool.perHour
+      };
+    }
+
+    // { normalizedName: { name, nights: [{ key, tip10, tip12, others }], avg10, avg12 } }
+    // Only nights with complete tip data count.
+    function buildPerformerStats(shiftData, employeeData) {
+      const stats = {};
+      Object.entries(shiftData || {}).forEach(([key, shift]) => {
+        const names = getShiftPerformers(shift);
+        if (names.length === 0) return;
+        const t = computeShiftTipouts(shift, employeeData, key);
+        if (!t) return;
+        names.forEach(name => {
+          const k = normalizePerformer(name);
+          if (!k) return;
+          if (!stats[k]) stats[k] = { name: name.trim(), nights: [] };
+          stats[k].nights.push({
+            key, tip10: t.tip10, tip12: t.tip12,
+            others: names.filter(n => normalizePerformer(n) !== k)
+          });
+        });
+      });
+      Object.values(stats).forEach(s => {
+        const n = s.nights.length;
+        s.avg10 = s.nights.reduce((a, x) => a + x.tip10, 0) / n;
+        s.avg12 = s.nights.reduce((a, x) => a + x.tip12, 0) / n;
+        s.nights.sort((a, b) => b.key.localeCompare(a.key));
+      });
+      return stats;
+    }
+
+    // Short label for a table cell: "Name" or "Name +2"
+    function performerCellLabel(names) {
+      if (!names.length) return '';
+      return names.length === 1 ? names[0] : `${names[0]} +${names.length - 1}`;
     }
 
     // Firebase Storage helpers
@@ -953,9 +1033,9 @@
       },
       tableHeader: {
         display: 'grid',
-        gridTemplateColumns: '70px 1fr 1fr 70px',
-        gap: '8px',
-        padding: '16px',
+        gridTemplateColumns: '60px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) 80px',
+        gap: '6px',
+        padding: '14px 8px',
         background: '#1a1a25',
         fontSize: '11px',
         fontWeight: '600',
@@ -965,7 +1045,7 @@
       },
       tableRow: {
         display: 'grid',
-        gridTemplateColumns: '60px minmax(110px, 1fr) minmax(110px, 1fr) 80px',
+        gridTemplateColumns: '60px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) 80px',
         gap: '6px',
         padding: '12px 8px',
         borderBottom: '1px solid #2a2a3a',
@@ -973,7 +1053,7 @@
       },
       tableRowMobile: {
         display: 'grid',
-        gridTemplateColumns: '50px 1fr 1fr 70px',
+        gridTemplateColumns: '42px minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.3fr) 60px',
         gap: '4px',
         padding: '10px 6px',
         borderBottom: '1px solid #2a2a3a',
@@ -985,14 +1065,40 @@
       colDate: {
         display: 'flex',
         flexDirection: 'column',
+        minWidth: 0,
       },
       colTime: {
         display: 'flex',
         alignItems: 'center',
         gap: '4px',
+        minWidth: 0,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
       },
       colTip: {
         textAlign: 'right',
+        minWidth: 0,
+        whiteSpace: 'nowrap',
+      },
+      colPerformer: {
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        fontSize: '12px',
+        color: '#c4b5fd',
+      },
+      tableHeaderMobile: {
+        display: 'grid',
+        gridTemplateColumns: '42px minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.3fr) 60px',
+        gap: '4px',
+        padding: '12px 6px',
+        background: '#1a1a25',
+        fontSize: '10px',
+        fontWeight: '600',
+        color: '#888899',
+        textTransform: 'uppercase',
+        letterSpacing: '0.3px',
       },
       dateText: {
         fontSize: '14px',
@@ -1249,6 +1355,258 @@
     // ============================================
 
     // Login Component
+
+    // Search-as-you-type performer picker (admin)
+    function PerformerPicker({ value, onChange, allNames }) {
+      const [query, setQuery] = useState('');
+      const [open, setOpen] = useState(false);
+
+      const selectedKeys = value.map(normalizePerformer);
+      const q = normalizePerformer(query);
+      const matches = q
+        ? allNames.filter(n => normalizePerformer(n).includes(q) && !selectedKeys.includes(normalizePerformer(n))).slice(0, 8)
+        : [];
+      const exact = allNames.find(n => normalizePerformer(n) === q);
+      const canAddNew = q && !exact && !selectedKeys.includes(q);
+
+      const addName = (name) => {
+        const clean = name.trim().replace(/\s+/g, ' ');
+        if (!clean) return;
+        // Reuse the saved spelling if this name already exists (prevents duplicates)
+        const existing = allNames.find(n => normalizePerformer(n) === normalizePerformer(clean));
+        const finalName = existing || clean;
+        if (selectedKeys.includes(normalizePerformer(finalName))) return;
+        onChange([...value, finalName]);
+        setQuery('');
+        setOpen(false);
+      };
+
+      return (
+        <div style={{position: 'relative'}}>
+          {value.length > 0 && (
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px'}}>
+              {value.map(name => (
+                <span key={name} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '6px 10px', borderRadius: '999px', fontSize: '14px',
+                  background: 'rgba(139, 92, 246, 0.2)', border: '1px solid rgba(139, 92, 246, 0.4)'
+                }}>
+                  {name}
+                  <span
+                    onClick={() => onChange(value.filter(n => n !== name))}
+                    style={{cursor: 'pointer', color: '#c4b5fd', fontWeight: 700}}
+                  >✕</span>
+                </span>
+              ))}
+            </div>
+          )}
+          <input
+            type="text"
+            value={query}
+            placeholder="Type performer name..."
+            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (matches.length > 0) addName(matches[0]);
+                else if (canAddNew) addName(query);
+              }
+            }}
+            style={{...styles.input, width: '100%'}}
+            autoComplete="off"
+          />
+          {open && (matches.length > 0 || canAddNew) && (
+            <div style={{
+              position: 'absolute', left: 0, right: 0, top: '100%', marginTop: '4px', zIndex: 50,
+              background: '#1a1a25', border: '1px solid #2a2a3a', borderRadius: '12px',
+              maxHeight: '240px', overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+            }}>
+              {matches.map(name => (
+                <div
+                  key={name}
+                  onMouseDown={(e) => { e.preventDefault(); addName(name); }}
+                  style={{padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #2a2a3a'}}
+                >
+                  {name}
+                </div>
+              ))}
+              {canAddNew && (
+                <div
+                  onMouseDown={(e) => { e.preventDefault(); addName(query); }}
+                  style={{padding: '12px 14px', cursor: 'pointer', color: '#06ffa5'}}
+                >
+                  + Add new: "{query.trim()}"
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // "My Tips | Performers" switch used on busser + supervisor dashboards
+    function DashboardTabs({ tab, setTab }) {
+      const btn = (id, label) => (
+        <button
+          onClick={() => setTab(id)}
+          style={{
+            flex: 1, padding: '10px', fontSize: '14px', fontWeight: 600,
+            border: 'none', borderRadius: '10px', cursor: 'pointer',
+            background: tab === id ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'transparent',
+            color: tab === id ? '#fff' : '#888899'
+          }}
+        >{label}</button>
+      );
+      return (
+        <div style={{
+          display: 'flex', gap: '4px', padding: '4px', marginBottom: '16px',
+          background: '#12121a', border: '1px solid #2a2a3a', borderRadius: '14px'
+        }}>
+          {btn('tips', 'My Tips')}
+          {btn('performers', 'Performers')}
+        </div>
+      );
+    }
+
+    // Performers tab: list with 10 / 12 averages, tap for every night
+    function PerformersView({ shiftData, employeeData }) {
+      const [selected, setSelected] = useState(null);
+      const [search, setSearch] = useState('');
+      const [sortBy, setSortBy] = useState('top'); // 'top' | 'az'
+
+      const stats = buildPerformerStats(shiftData, employeeData);
+      const money = (n) => `$${n.toFixed(0)}`;
+      const cell = { textAlign: 'right', fontSize: '14px', fontWeight: 700, color: '#06ffa5', minWidth: 0 };
+      const headCell = { textAlign: 'right', fontSize: '11px', fontWeight: 600, color: '#888899', textTransform: 'uppercase' };
+      const grid = { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 62px 62px', gap: '8px', alignItems: 'center' };
+
+      if (selected && stats[selected]) {
+        const s = stats[selected];
+        return (
+          <div>
+            <button onClick={() => setSelected(null)} style={{...styles.secondaryBtn, padding: '8px 14px', fontSize: '14px', marginBottom: '16px'}}>
+              ← All performers
+            </button>
+            <div style={{...styles.card, padding: '18px'}}>
+              <h2 style={{margin: '0 0 4px', fontSize: '22px', fontWeight: 700, wordBreak: 'break-word'}}>{s.name}</h2>
+              <p style={{margin: '0 0 16px', fontSize: '13px', color: '#888899'}}>
+                {s.nights.length} night{s.nights.length === 1 ? '' : 's'}
+              </p>
+              <div style={{display: 'flex', gap: '12px'}}>
+                {[['10 shift avg', s.avg10], ['12 shift avg', s.avg12]].map(([label, v]) => (
+                  <div key={label} style={{flex: 1, background: '#1a1a25', borderRadius: '12px', padding: '12px', textAlign: 'center'}}>
+                    <div style={{fontSize: '11px', color: '#888899', textTransform: 'uppercase'}}>{label}</div>
+                    <div style={{fontSize: '22px', fontWeight: 700, color: '#06ffa5'}}>${v.toFixed(2)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={styles.tableContainer}>
+              <div style={{...grid, padding: '12px 14px', background: '#1a1a25'}}>
+                <span style={{...headCell, textAlign: 'left'}}>Date</span>
+                <span style={headCell}>10</span>
+                <span style={headCell}>12</span>
+              </div>
+              {s.nights.map(n => {
+                const d = new Date(n.key + 'T12:00:00');
+                return (
+                  <div key={n.key} style={{...grid, padding: '12px 14px', borderBottom: '1px solid #2a2a3a'}}>
+                    <span style={{minWidth: 0}}>
+                      <span style={{display: 'block', fontSize: '14px', fontWeight: 600}}>
+                        {formatDate(d, 'long')} <span style={{color: '#888899', fontWeight: 400, fontSize: '12px'}}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                      </span>
+                      {n.others.length > 0 && (
+                        <span style={{display: 'block', fontSize: '11px', color: '#888899', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                          with {n.others.join(', ')}
+                        </span>
+                      )}
+                    </span>
+                    <span style={cell}>${n.tip10.toFixed(2)}</span>
+                    <span style={cell}>${n.tip12.toFixed(2)}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p style={{...styles.hint, marginTop: 0}}>Full-shift tip-out for that night (10 PM or 12 AM to close).</p>
+          </div>
+        );
+      }
+
+      const q = normalizePerformer(search);
+      let list = Object.entries(stats).filter(([k]) => !q || k.includes(q));
+      if (sortBy === 'az') list.sort((a, b) => a[1].name.localeCompare(b[1].name));
+      else list.sort((a, b) => b[1].avg10 - a[1].avg10);
+
+      return (
+        <div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search performer..."
+            style={{...styles.input, width: '100%', marginBottom: '10px'}}
+            autoComplete="off"
+          />
+          <div style={{display: 'flex', gap: '8px', marginBottom: '12px'}}>
+            {[['top', 'Highest avg'], ['az', 'A–Z']].map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setSortBy(id)}
+                style={{
+                  padding: '6px 12px', fontSize: '13px', borderRadius: '999px', cursor: 'pointer',
+                  border: '1px solid ' + (sortBy === id ? '#8b5cf6' : '#2a2a3a'),
+                  background: sortBy === id ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                  color: sortBy === id ? '#fff' : '#888899'
+                }}
+              >{label}</button>
+            ))}
+          </div>
+          <div style={styles.tableContainer}>
+            <div style={{...grid, padding: '12px 14px', background: '#1a1a25'}}>
+              <span style={{...headCell, textAlign: 'left'}}>Performer</span>
+              <span style={headCell}>10 avg</span>
+              <span style={headCell}>12 avg</span>
+            </div>
+            {list.map(([k, s]) => (
+              <div
+                key={k}
+                onClick={() => setSelected(k)}
+                style={{...grid, padding: '14px', borderBottom: '1px solid #2a2a3a', cursor: 'pointer'}}
+              >
+                <span style={{minWidth: 0}}>
+                  <span style={{display: 'block', fontSize: '15px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{s.name}</span>
+                  <span style={{display: 'block', fontSize: '11px', color: '#888899'}}>{s.nights.length} night{s.nights.length === 1 ? '' : 's'} ›</span>
+                </span>
+                <span style={cell}>{money(s.avg10)}</span>
+                <span style={cell}>{money(s.avg12)}</span>
+              </div>
+            ))}
+            {list.length === 0 && (
+              <p style={styles.emptyText}>{q ? 'No performer found' : 'No performer nights with tips yet'}</p>
+            )}
+          </div>
+          <p style={{...styles.hint, marginTop: 0}}>
+            Average full-shift tip-out on nights they played. Nights with more than one performer count for each of them.
+          </p>
+        </div>
+      );
+    }
+
+    // Performer cell for the dashboard tables
+    function PerformerCell({ names }) {
+      if (!names.length) return <span style={styles.colPerformer}><span style={{color: '#555566'}}>—</span></span>;
+      return (
+        <span
+          style={styles.colPerformer}
+          onClick={names.length > 1 ? () => alert(names.join('\n')) : undefined}
+        >
+          {performerCellLabel(names)}
+        </span>
+      );
+    }
+
     function Login({ onLogin, employeeList }) {
       const [selectedEmployee, setSelectedEmployee] = useState('');
       const [employeeId, setEmployeeId] = useState('');
@@ -1366,6 +1724,10 @@
       // clock-OUT is entered by the supervisor on their own dashboard, not here.
       const [supervisorsWorked, setSupervisorsWorked] = useState([]);
 
+      // Performers for the selected night
+      const [performers, setPerformers] = useState([]);
+      const allPerformerNames = getAllPerformerNames(shiftData);
+
       // Extra bussers — admin-entered custom in-times (additive pool hours)
       const [extraBussers, setExtraBussers] = useState([]); // [{ name, inTime }]
       const [extraName, setExtraName] = useState('');
@@ -1432,6 +1794,7 @@
           // Load supervisors + extras
           setSupervisorsWorked(existing.supervisorsWorked || []);
           setExtraBussers(existing.extraBussers || []);
+          setPerformers(getShiftPerformers(existing));
         } else {
           setTotalTips('');
           setEndTimeHour('');
@@ -1446,6 +1809,7 @@
           setBanquetInPeriod('PM');
           setSupervisorsWorked([]);
           setExtraBussers([]);
+          setPerformers([]);
         }
         setExtraName('');
         setExtraInHour('');
@@ -1482,6 +1846,9 @@
             banquetInTime: hasBanquet ? fullBanquetInTime : '',
             supervisorsWorked: supervisorsWorked,
             extraBussers: extraBussers,
+            // Rebuilt from the form like every other field, so it must be included
+            // here or re-saving a night would wipe its performers.
+            performers: performers,
           }
         };
         setShiftData(newData);
@@ -1629,6 +1996,29 @@
           setShiftData(newData);
           saveData('shiftData', newData);
         }
+      };
+
+      // One-time: copy past lineups onto nights that already have a record.
+      // Never overwrites performers already saved on a night, never touches other fields.
+      const handleImportPerformers = () => {
+        const toFill = Object.entries(HISTORICAL_PERFORMERS)
+          .filter(([key]) => shiftData[key] && getShiftPerformers(shiftData[key]).length === 0);
+        const noRecord = Object.keys(HISTORICAL_PERFORMERS).filter(key => !shiftData[key]).length;
+        const already = Object.keys(HISTORICAL_PERFORMERS).length - toFill.length - noRecord;
+
+        if (toFill.length === 0) {
+          alert(`Nothing to import.\n${already} night(s) already have performers.\n${noRecord} night(s) have no shift entry.`);
+          return;
+        }
+        if (!confirm(`Add performers to ${toFill.length} night(s)?\n\n${already} already have performers (left alone).\n${noRecord} have no shift entry (skipped).`)) return;
+
+        const newData = { ...shiftData };
+        toFill.forEach(([key, names]) => {
+          newData[key] = { ...newData[key], performers: names };
+        });
+        setShiftData(newData);
+        saveData('shiftData', newData);
+        alert(`✓ Performers added to ${toFill.length} night(s)`);
       };
 
       const handleLoadEntry = (date) => {
@@ -2004,6 +2394,11 @@
                 </div>
               </div>
               
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Performers ({performers.length})</label>
+                <PerformerPicker value={performers} onChange={setPerformers} allNames={allPerformerNames} />
+              </div>
+
               <div style={styles.divider} />
 
               <h3 style={styles.subTitle}>Staff Count</h3>
@@ -2616,7 +3011,12 @@
                       onMouseEnter={() => setHoveredEntry(date)}
                       onMouseLeave={() => setHoveredEntry(null)}
                     >
-                      <span style={styles.entryDate}>{formatDate(new Date(date + 'T12:00:00'), 'long')}</span>
+                      <span style={{...styles.entryDate, minWidth: 0}}>
+                        {formatDate(new Date(date + 'T12:00:00'), 'long')}
+                        {getShiftPerformers(data).length > 0 && (
+                          <span style={{display: 'block', fontSize: '12px', color: '#c4b5fd'}}>{getShiftPerformers(data).join(', ')}</span>
+                        )}
+                      </span>
                       <div style={{display: 'flex', alignItems: 'center'}}>
                         <span style={styles.entryTips}>${data.totalTips?.toFixed(2) || '0.00'}</span>
                         <button
@@ -2635,6 +3035,16 @@
                   <p style={styles.emptyText}>No entries yet</p>
                 )}
               </div>
+            </div>
+
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Past Performers</h2>
+              <p style={{...styles.subTitle, marginBottom: '16px'}}>
+                One-time import of lineups from Jan 23 – Sep 13, 2026. Only fills nights that have a shift entry and no performers yet.
+              </p>
+              <button onClick={handleImportPerformers} style={{...styles.secondaryBtn, width: '100%'}}>
+                Import past performers
+              </button>
             </div>
           </div>
         );
@@ -2847,6 +3257,8 @@
       
       // Use employeeData directly instead of local state
       const localData = employeeData[user.username] || {};
+
+      const [tab, setTab] = useState('tips'); // 'tips' | 'performers'
 
       // Add Shift Modal state
       const [showAddShiftModal, setShowAddShiftModal] = useState(false);
@@ -3152,7 +3564,12 @@
             <button onClick={onLogout} style={styles.logoutBtn}>Logout</button>
           </header>
           
-          <div style={styles.content}>
+          <div style={{...styles.content, ...(isMobile ? { padding: '16px 12px' } : {})}}>
+            <DashboardTabs tab={tab} setTab={setTab} />
+
+            {tab === 'performers' ? (
+              <PerformersView shiftData={shiftData} employeeData={employeeData} />
+            ) : (<>
             <div style={styles.periodCard}>
               <div style={styles.periodNav}>
                 <button 
@@ -3187,10 +3604,11 @@
             </div>
             
             <div style={styles.tableContainer}>
-              <div style={styles.tableHeader}>
+              <div style={isMobile ? styles.tableHeaderMobile : styles.tableHeader}>
                 <span>Date</span>
                 <span>Start</span>
                 <span>End</span>
+                <span>Performer</span>
                 <span style={{textAlign: 'right'}}>Tips</span>
               </div>
               
@@ -3207,6 +3625,7 @@
                 const isToday = dateKey(date) === dateKey(today);
 
                 const hasShiftData = dayData.startTime || dayData.startTimeOverride;
+                const nightPerformers = getShiftPerformers(shift);
 
                 return (
                   <div key={key} style={{...(isMobile ? styles.tableRowMobile : styles.tableRow), ...(isToday ? styles.tableRowToday : {})}}>
@@ -3218,14 +3637,18 @@
                     </span>
 
                     {!hasShiftData ? (
-                      <div style={{gridColumn: '2 / 5', display: 'flex', justifyContent: 'center'}}>
-                        <button
-                          onClick={() => openAddShiftModal(date)}
-                          style={styles.addShiftBtn}
-                        >
-                          Add Shift
-                        </button>
-                      </div>
+                      <>
+                        <div style={{gridColumn: '2 / 4', display: 'flex', justifyContent: 'center', minWidth: 0}}>
+                          <button
+                            onClick={() => openAddShiftModal(date)}
+                            style={{...styles.addShiftBtn, ...(isMobile ? { padding: '8px 10px', fontSize: '12px', whiteSpace: 'nowrap' } : {})}}
+                          >
+                            Add Shift
+                          </button>
+                        </div>
+                        <PerformerCell names={nightPerformers} />
+                        <span style={styles.colTip}><span style={styles.tipEmpty}></span></span>
+                      </>
                     ) : (
                       <>
                         <div style={styles.colTime}>
@@ -3240,9 +3663,11 @@
                           </span>
                         </div>
 
+                        <PerformerCell names={nightPerformers} />
+
                         <span style={styles.colTip}>
                           {result ? (
-                            <span style={styles.tipAmount}>${result.myTip.toFixed(2)}</span>
+                            <span style={{...styles.tipAmount, ...(isMobile ? { fontSize: '13px' } : {})}}>${result.myTip.toFixed(2)}</span>
                           ) : (
                             <span style={styles.tipEmpty}>--</span>
                           )}
@@ -3265,6 +3690,7 @@
                 <span style={styles.totalValueHighlight}>${totals.tips.toFixed(2)}</span>
               </div>
             </div>
+            </>)}
 
             {/* Add Shift Modal */}
             {showAddShiftModal && (
@@ -3390,6 +3816,8 @@
       const [periodOffset, setPeriodOffset] = useState(0);
       const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
+      const [tab, setTab] = useState('tips'); // 'tips' | 'performers'
+
       // Times entry modal state — supervisor enters BOTH their in and out
       const [clockDate, setClockDate] = useState(null);
       const [inHour, setInHour] = useState('');
@@ -3511,7 +3939,12 @@
             <button onClick={onLogout} style={styles.logoutBtn}>Logout</button>
           </header>
 
-          <div style={styles.content}>
+          <div style={{...styles.content, ...(isMobile ? { padding: '16px 12px' } : {})}}>
+            <DashboardTabs tab={tab} setTab={setTab} />
+
+            {tab === 'performers' ? (
+              <PerformersView shiftData={shiftData} employeeData={employeeData} />
+            ) : (<>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
               <button onClick={() => setPeriodOffset(periodOffset - 1)} style={styles.secondaryBtn}>←</button>
               <span style={{fontSize: '14px', color: '#888899'}}>
@@ -3536,17 +3969,27 @@
               </div>
             )}
 
-            <div style={styles.card}>
+            <div style={styles.tableContainer}>
+              <div style={isMobile ? styles.tableHeaderMobile : styles.tableHeader}>
+                <span>Date</span>
+                <span>In</span>
+                <span>Out</span>
+                <span>Performer</span>
+                <span style={{textAlign: 'right'}}>Tips</span>
+              </div>
               {dates.map(date => {
                 const r = dayResult(date);
                 const isToday = dateKey(date) === dateKey(today);
+                const nightPerformers = getShiftPerformers(shiftData[dateKey(date)]);
                 if (!r) return (
                   <div key={dateKey(date)} style={{...(isMobile ? styles.tableRowMobile : styles.tableRow), ...(isToday ? styles.tableRowToday : {}), opacity: 0.45}}>
                     <span style={styles.colDate}>
                       <span style={styles.dateText}>{formatDate(date)}</span>
                       <span style={styles.dayText}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
                     </span>
-                    <div style={{gridColumn: '2 / 5', textAlign: 'center', fontSize: '12px', color: '#888899'}}>—</div>
+                    <div style={{gridColumn: '2 / 4', textAlign: 'center', fontSize: '12px', color: '#888899'}}>—</div>
+                    <PerformerCell names={nightPerformers} />
+                    <span style={styles.colTip}></span>
                   </div>
                 );
                 return (
@@ -3557,7 +4000,7 @@
                     </span>
                     {r.pending ? (
                       <div style={{gridColumn: '2 / 4', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                        <button onClick={() => openTimes(date)} style={{...styles.secondaryBtn, padding: '6px 12px', fontSize: '12px'}}>
+                        <button onClick={() => openTimes(date)} style={{...styles.secondaryBtn, padding: '6px 8px', fontSize: '11px', whiteSpace: 'nowrap'}}>
                           + set in & out
                         </button>
                       </div>
@@ -3575,11 +4018,12 @@
                         </div>
                       </>
                     )}
+                    <PerformerCell names={nightPerformers} />
                     <span style={styles.colTip}>
                       {r.pending ? (
                         <span style={{fontSize: '12px', color: '#ffc857'}}>pending</span>
                       ) : (
-                        <span style={styles.tipAmount}>${r.amount.toFixed(2)}</span>
+                        <span style={{...styles.tipAmount, ...(isMobile ? { fontSize: '13px' } : {})}}>${r.amount.toFixed(2)}</span>
                       )}
                     </span>
                   </div>
@@ -3602,6 +4046,7 @@
             <p style={{fontSize: '12px', color: '#888899', textAlign: 'center', marginTop: '16px'}}>
               Rate = busser tips/hr × 1.20 · You enter your own in and out times
             </p>
+            </>)}
           </div>
 
           {clockDate && (
