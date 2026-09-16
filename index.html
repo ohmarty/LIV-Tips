@@ -445,10 +445,9 @@
     // imported history below), so there is no separate list to fall out of sync.
     // ============================================
 
-    // Past lineups Jan 23 – Sep 13, 2026 (source: concertarchives.org,
-    // Mar 25 corrected to Carlita by Martin). Used by the one-time admin import
-    // and to seed the search suggestions.
-    const HISTORICAL_PERFORMERS = {"2026-01-23": ["Steve Aoki"], "2026-01-24": ["Frank Walker", "Arty"], "2026-01-25": ["2 Chainz"], "2026-01-28": ["Ian Asher"], "2026-01-30": ["French Montana"], "2026-01-31": ["Layton Giordani"], "2026-02-06": ["Lil Tjay"], "2026-02-07": ["Sonny Fodera"], "2026-02-08": ["Kevin Gates"], "2026-02-14": ["Gryffin"], "2026-02-15": ["Yung Miami"], "2026-02-19": ["Omar Courtz"], "2026-02-20": ["DJ Khaled"], "2026-02-21": ["Cedric Gervais"], "2026-02-28": ["Ian Asher"], "2026-03-01": ["42 Dugg"], "2026-03-03": ["Odd Mob"], "2026-03-05": ["Bad Gyal"], "2026-03-07": ["Two Friends"], "2026-03-12": ["Alofoke"], "2026-03-13": ["Alok"], "2026-03-14": ["Loud Luxury"], "2026-03-15": ["Quavo"], "2026-03-18": ["TWINSICK"], "2026-03-25": ["Carlita"], "2026-03-26": ["PAWSA"], "2026-03-27": ["Black Coffee"], "2026-03-28": ["ADRIATIQUE"], "2026-03-29": ["Lil Baby"], "2026-04-03": ["Lil Tjay"], "2026-04-04": ["Dombresky"], "2026-04-05": ["Swae Lee"], "2026-04-10": ["T.I."], "2026-04-11": ["DJ Khaled"], "2026-04-17": ["Big Sean"], "2026-04-18": ["MK"], "2026-04-19": ["NLE Choppa"], "2026-04-25": ["Sidepiece"], "2026-04-30": ["James Hype"], "2026-05-01": ["ADRIATIQUE"], "2026-05-02": ["John Summit"], "2026-05-03": ["50 Cent"], "2026-05-06": ["TWINSICK"], "2026-05-08": ["Steve Aoki"], "2026-05-09": ["BUNT."], "2026-05-15": ["Ty Dolla $ign"], "2026-05-16": ["MORTEN"], "2026-05-17": ["Francis Mercier", "Michael Brun"], "2026-05-21": ["Pedro Sampaio"], "2026-05-22": ["Lil Baby"], "2026-05-23": ["Two Friends"], "2026-05-24": ["DaBaby"], "2026-05-29": ["Jason Derulo"], "2026-05-30": ["Mathame"], "2026-05-31": ["Sexyy Red"], "2026-06-04": ["La Joaqui"], "2026-06-05": ["French Montana"], "2026-06-06": ["Cedric Gervais"], "2026-06-13": ["MK"], "2026-06-20": ["Massano"], "2026-06-26": ["Gorgon City"], "2026-06-27": ["Juliana"], "2026-07-02": ["Steve Aoki"], "2026-07-03": ["Young Thug"], "2026-07-04": ["Loud Luxury"], "2026-07-10": ["Pedro Sampaio"], "2026-07-12": ["Curren$y", "Miles Minnick", "sosocamo", "La Reezy", "Skrilla", "Chris Patrick", "BabyFxce E", "Slayr"], "2026-07-23": ["Bebeshito"], "2026-07-25": ["Ian Asher"], "2026-07-31": ["Galantis"], "2026-08-07": ["DJ Khaled"], "2026-08-08": ["Kettama"], "2026-08-14": ["DJ Pauly D"], "2026-08-15": ["Nicky Romero"], "2026-08-22": ["Loud Luxury"], "2026-08-28": ["French Montana"], "2026-08-29": ["Two Friends"], "2026-09-04": ["Fetty Wap"], "2026-09-05": ["Disco Lines"], "2026-09-06": ["Lil Baby"], "2026-09-11": ["Soulja Boy"], "2026-09-13": ["Sheck Wes"]};
+    // Past lineups were imported into the database (Sep 2026), so this is empty.
+    // Any names added here would only appear as search suggestions.
+    const HISTORICAL_PERFORMERS = {};
 
     function normalizePerformer(name) {
       return (name || '').trim().replace(/\s+/g, ' ').toLowerCase();
@@ -1998,29 +1997,6 @@
         }
       };
 
-      // One-time: copy past lineups onto nights that already have a record.
-      // Never overwrites performers already saved on a night, never touches other fields.
-      const handleImportPerformers = () => {
-        const toFill = Object.entries(HISTORICAL_PERFORMERS)
-          .filter(([key]) => shiftData[key] && getShiftPerformers(shiftData[key]).length === 0);
-        const noRecord = Object.keys(HISTORICAL_PERFORMERS).filter(key => !shiftData[key]).length;
-        const already = Object.keys(HISTORICAL_PERFORMERS).length - toFill.length - noRecord;
-
-        if (toFill.length === 0) {
-          alert(`Nothing to import.\n${already} night(s) already have performers.\n${noRecord} night(s) have no shift entry.`);
-          return;
-        }
-        if (!confirm(`Add performers to ${toFill.length} night(s)?\n\n${already} already have performers (left alone).\n${noRecord} have no shift entry (skipped).`)) return;
-
-        const newData = { ...shiftData };
-        toFill.forEach(([key, names]) => {
-          newData[key] = { ...newData[key], performers: names };
-        });
-        setShiftData(newData);
-        saveData('shiftData', newData);
-        alert(`✓ Performers added to ${toFill.length} night(s)`);
-      };
-
       const handleLoadEntry = (date) => {
         setSelectedDate(date);
         setCurrentPage('shift-data'); // Navigate to shift data page to show the shift data
@@ -3037,15 +3013,6 @@
               </div>
             </div>
 
-            <div style={styles.card}>
-              <h2 style={styles.cardTitle}>Past Performers</h2>
-              <p style={{...styles.subTitle, marginBottom: '16px'}}>
-                One-time import of lineups from Jan 23 – Sep 13, 2026. Only fills nights that have a shift entry and no performers yet.
-              </p>
-              <button onClick={handleImportPerformers} style={{...styles.secondaryBtn, width: '100%'}}>
-                Import past performers
-              </button>
-            </div>
           </div>
         );
 
