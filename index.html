@@ -563,6 +563,29 @@
       }
     }
 
+    // Save ONLY the entries passed in, instead of rewriting the whole document.
+    // Firestore merges nested maps, so { value: { '2026-09-11': {...} } } touches
+    // that one night and leaves every other night alone. This stops a phone with
+    // stale data from overwriting newer entries.
+    async function saveDataPartial(key, partial) {
+      try {
+        if (window.dataLoaded && !window.dataLoaded[key]) {
+          console.warn(`⚠️ Blocked partial save for ${key} - data not yet loaded from Firebase`);
+          return;
+        }
+        const entries = Object.keys(partial || {});
+        if (entries.length === 0) {
+          console.warn(`⚠️ Nothing to save for ${key}`);
+          return;
+        }
+        console.log(`💾 Saving ${entries.length} entry(ies) in ${key}:`, entries.join(', '));
+        const docRef = window.firestoreDoc(window.firebaseDb, 'appData', key);
+        await window.firestoreSetDoc(docRef, { value: partial }, { merge: true });
+      } catch (error) {
+        console.error('Error saving data:', error);
+      }
+    }
+
     // ============================================
     // STYLES
     // ============================================
@@ -1355,6 +1378,113 @@
 
     // Login Component
 
+    // Admin: rename, merge, or remove a performer across every night
+    function PerformerManager({ shiftData, setShiftData }) {
+      const [selected, setSelected] = useState('');
+      const [newName, setNewName] = useState('');
+
+      // name -> { name, dates: [] }
+      const byName = {};
+      Object.entries(shiftData || {}).forEach(([date, shift]) => {
+        getShiftPerformers(shift).forEach(n => {
+          const k = normalizePerformer(n);
+          if (!byName[k]) byName[k] = { name: n.trim(), dates: [] };
+          byName[k].dates.push(date);
+        });
+      });
+      const list = Object.values(byName).sort((a, b) => a.name.localeCompare(b.name));
+      const current = selected ? byName[normalizePerformer(selected)] : null;
+
+      const applyChange = (replacement) => {
+        if (!current) return;
+        const target = replacement === null ? null : replacement.trim().replace(/\s+/g, ' ');
+        const changes = {};
+        const newData = { ...shiftData };
+        current.dates.forEach(date => {
+          const names = getShiftPerformers(shiftData[date]);
+          const out = [];
+          names.forEach(n => {
+            const isMatch = normalizePerformer(n) === normalizePerformer(current.name);
+            const value = isMatch ? target : n;
+            if (value && !out.some(x => normalizePerformer(x) === normalizePerformer(value))) out.push(value);
+          });
+          newData[date] = { ...newData[date], performers: out };
+          changes[date] = { performers: out };
+        });
+        setShiftData(newData);
+        saveDataPartial('shiftData', changes);
+        setSelected('');
+        setNewName('');
+        alert(target
+          ? `✓ "${current.name}" is now "${target}" on ${current.dates.length} night(s)`
+          : `✓ Removed "${current.name}" from ${current.dates.length} night(s)`);
+      };
+
+      const handleSaveName = () => {
+        const target = newName.trim();
+        if (!target || !current) return;
+        if (normalizePerformer(target) === normalizePerformer(current.name)) { alert('That is the same name'); return; }
+        const existing = byName[normalizePerformer(target)];
+        const msg = existing
+          ? `Merge "${current.name}" (${current.dates.length} night(s)) into "${existing.name}" (${existing.dates.length} night(s))?\n\nThey become one performer.`
+          : `Rename "${current.name}" to "${target}" on ${current.dates.length} night(s)?`;
+        if (confirm(msg)) applyChange(existing ? existing.name : target);
+      };
+
+      return (
+        <div style={styles.card}>
+          <h2 style={styles.cardTitle}>Performers ({list.length})</h2>
+          <p style={{...styles.subTitle, marginBottom: '12px'}}>
+            Fix a spelling, or merge two names that are the same person.
+          </p>
+
+          <div style={{maxHeight: '260px', overflowY: 'auto', border: '1px solid #2a2a3a', borderRadius: '12px'}}>
+            {list.map(p => (
+              <div
+                key={p.name}
+                onClick={() => { setSelected(p.name); setNewName(p.name); }}
+                style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '12px 14px', borderBottom: '1px solid #2a2a3a', cursor: 'pointer',
+                  background: current && current.name === p.name ? 'rgba(139, 92, 246, 0.2)' : 'transparent'
+                }}
+              >
+                <span style={{fontSize: '15px'}}>{p.name}</span>
+                <span style={{fontSize: '12px', color: '#888899'}}>{p.dates.length} night{p.dates.length === 1 ? '' : 's'}</span>
+              </div>
+            ))}
+            {list.length === 0 && <p style={styles.emptyText}>No performers saved yet</p>}
+          </div>
+
+          {current && (
+            <div style={{marginTop: '16px'}}>
+              <label style={styles.label}>New name for "{current.name}"</label>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                style={{...styles.input, width: '100%'}}
+                autoComplete="off"
+              />
+              <p style={{...styles.hint, marginTop: '6px'}}>
+                Type a name that already exists to merge them.
+              </p>
+              <div style={{display: 'flex', gap: '8px', marginTop: '10px'}}>
+                <button onClick={handleSaveName} style={{...styles.primaryBtn, flex: 1}}>Save name</button>
+                <button onClick={() => { setSelected(''); setNewName(''); }} style={{...styles.secondaryBtn, flex: 1}}>Cancel</button>
+              </div>
+              <button
+                onClick={() => {
+                  if (confirm(`Remove "${current.name}" from all ${current.dates.length} night(s)? The nights stay, only the name is removed.`)) applyChange(null);
+                }}
+                style={{...styles.secondaryBtn, width: '100%', marginTop: '8px', borderColor: '#ef4444', color: '#ef4444'}}
+              >Remove from all nights</button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // Search-as-you-type performer picker (admin)
     function PerformerPicker({ value, onChange, allNames }) {
       const [query, setQuery] = useState('');
@@ -2007,7 +2137,7 @@
           }
         };
         setShiftData(newData);
-        saveData('shiftData', newData);
+        saveDataPartial('shiftData', { [selectedDate]: newData[selectedDate] });
 
         // Handle employee data updates
         let newEmployeeData = { ...employeeData };
@@ -2149,7 +2279,7 @@
           const newData = { ...shiftData };
           delete newData[date];
           setShiftData(newData);
-          saveData('shiftData', newData);
+          saveDataPartial('shiftData', { [date]: window.firestoreDeleteField() });
         }
       };
 
@@ -3169,6 +3299,7 @@
               </div>
             </div>
 
+            <PerformerManager shiftData={shiftData} setShiftData={setShiftData} />
           </div>
         );
 
@@ -3437,7 +3568,7 @@
         logger.log('info', `📥 Data with deleteField markers for Firebase:`, firebaseEntry);
 
         setEmployeeData(newEmployeeData);
-        saveData('employeeData', firebaseEmployeeData);
+        saveDataPartial('employeeData', { [user.username]: { [key]: firebaseEntry } });
       };
 
       // Convert "3:00 AM" to "03:00" (24-hour format for input type="time")
@@ -3577,7 +3708,7 @@
         }
 
         setEmployeeData({ ...employeeData, [user.username]: newUserData });
-        saveData('employeeData', { ...employeeData, [user.username]: firebaseUserData });
+        saveDataPartial('employeeData', { [user.username]: { [key]: window.firestoreDeleteField() } });
 
         setShowAddShiftModal(false);
         alert('✓ Start time cleared');
@@ -4326,6 +4457,28 @@
           }
         });
         unsubscribers.push(unsubMeta);
+
+        // Foreground check — when the app is reopened from the background, ask the
+        // server (not the cache) whether a newer version was deployed, and reload.
+        const checkVersionNow = async () => {
+          if (document.visibilityState !== 'visible') return;
+          try {
+            const snap = await window.firestoreGetDocFromServer(metaRef);
+            const serverVersion = snap.exists() ? (snap.data().appVersion || 0) : 0;
+            if (serverVersion > window.APP_VERSION) {
+              console.warn(`🔄 Foreground check: v${serverVersion} > v${window.APP_VERSION} — reloading...`);
+              window.location.reload();
+            }
+          } catch (err) {
+            console.warn('Foreground version check failed (offline?)', err);
+          }
+        };
+        document.addEventListener('visibilitychange', checkVersionNow);
+        window.addEventListener('pageshow', checkVersionNow);
+        unsubscribers.push(() => {
+          document.removeEventListener('visibilitychange', checkVersionNow);
+          window.removeEventListener('pageshow', checkVersionNow);
+        });
 
         // Listen to shiftData changes
         const shiftDataRef = window.firestoreDoc(window.firebaseDb, 'appData', 'shiftData');
