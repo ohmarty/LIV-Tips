@@ -1446,7 +1446,7 @@
     }
 
     // "My Tips | Performers" switch used on busser + supervisor dashboards
-    function DashboardTabs({ tab, setTab }) {
+    function DashboardTabs({ tab, setTab, showCalendar, sticky }) {
       const btn = (id, label) => (
         <button
           onClick={() => setTab(id)}
@@ -1461,9 +1461,11 @@
       return (
         <div style={{
           display: 'flex', gap: '4px', padding: '4px', marginBottom: '16px',
-          background: '#12121a', border: '1px solid #2a2a3a', borderRadius: '14px'
+          background: '#12121a', border: '1px solid #2a2a3a', borderRadius: '14px',
+          ...(sticky ? { position: 'sticky', top: '8px', zIndex: 40, boxShadow: '0 -8px 0 8px #0a0a0f' } : {})
         }}>
           {btn('tips', 'My Tips')}
+          {showCalendar && btn('calendar', 'Calendar')}
           {btn('performers', 'Performers')}
         </div>
       );
@@ -1589,6 +1591,160 @@
           <p style={{...styles.hint, marginTop: 0}}>
             Average full-shift tip-out on nights they played. Nights with more than one performer count for each of them.
           </p>
+        </div>
+      );
+    }
+
+
+    // Month calendar — months stacked, scroll up/down (like Apple Calendar).
+    // getDay(date) -> { amount: number|null, start, end } for this user.
+    function CalendarView({ shiftData, getDay }) {
+      const today = new Date();
+      const currentRef = React.useRef(null);
+      const [selected, setSelected] = useState(null);
+
+      // Months from Jan 2026 through next month
+      const months = [];
+      const last = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      for (let d = new Date(2026, 0, 1); d <= last; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+        months.push(new Date(d));
+      }
+      const isCurrent = (m) => m.getFullYear() === today.getFullYear() && m.getMonth() === today.getMonth();
+
+      const scrollToToday = (smooth) => {
+        const el = currentRef.current;
+        if (!el) return;
+        const y = el.getBoundingClientRect().top + window.scrollY - 110;
+        window.scrollTo({ top: y, behavior: smooth ? 'smooth' : 'auto' });
+      };
+      useEffect(() => { scrollToToday(false); }, []);
+
+      const renderMonth = (m) => {
+        const y = m.getFullYear(), mo = m.getMonth();
+        const startDow = new Date(y, mo, 1).getDay();
+        const dim = new Date(y, mo + 1, 0).getDate();
+        const cells = [];
+        for (let i = 0; i < startDow; i++) cells.push(null);
+        let total = 0;
+        for (let i = 1; i <= dim; i++) {
+          const date = new Date(y, mo, i, 12);
+          const info = getDay(date) || {};
+          if (info.amount != null) total += info.amount;
+          cells.push({ date, info });
+        }
+
+        return (
+          <div key={`${y}-${mo}`} ref={isCurrent(m) ? currentRef : null} style={{marginBottom: '28px'}}>
+            <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '0 4px 8px'}}>
+              <span style={{fontSize: '24px', fontWeight: 700}}>
+                {m.toLocaleDateString('en-US', { month: 'long' })}
+                {y !== today.getFullYear() && <span style={{color: '#888899', fontWeight: 500}}> {y}</span>}
+              </span>
+              <span style={{fontSize: '15px', fontWeight: 700, color: total > 0 ? '#06ffa5' : '#555566'}}>
+                ${total.toFixed(2)}
+              </span>
+            </div>
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))'}}>
+              {cells.map((c, i) => {
+                if (!c) return <div key={`e${i}`} />;
+                const { date, info } = c;
+                const key = dateKey(date);
+                const worked = info.amount != null;
+                // Days the busser didn't work stay empty (no tip, no artist)
+                const names = worked ? getShiftPerformers(shiftData[key]) : [];
+                const isToday = dateKey(date) === dateKey(today);
+                const isSel = selected === key;
+                const weekend = date.getDay() === 0 || date.getDay() === 6;
+                return (
+                  <div
+                    key={key}
+                    onClick={() => { if (worked) setSelected(isSel ? null : key); }}
+                    style={{
+                      borderTop: '1px solid #2a2a3a', minHeight: '66px', padding: '3px 2px 4px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0,
+                      cursor: worked ? 'pointer' : 'default', borderRadius: isSel ? '8px' : 0,
+                      background: isSel ? 'rgba(139, 92, 246, 0.25)' : 'transparent'
+                    }}
+                  >
+                    <span style={{
+                      alignSelf: 'flex-start', fontSize: '10px', fontWeight: 600, lineHeight: '16px',
+                      minWidth: '16px', height: '16px', textAlign: 'center', borderRadius: '8px',
+                      background: isToday ? '#ef4444' : 'transparent',
+                      color: isToday ? '#fff' : (weekend ? '#888899' : '#ccccdd')
+                    }}>{date.getDate()}</span>
+                    {info.amount != null && (
+                      <span style={{fontSize: '12px', fontWeight: 700, color: '#06ffa5', marginTop: '2px', whiteSpace: 'nowrap'}}>
+                        ${Math.round(info.amount)}
+                      </span>
+                    )}
+                    {names.length > 0 && (
+                      <span style={{
+                        fontSize: '9px', lineHeight: '11px', color: '#c4b5fd', textAlign: 'center',
+                        marginTop: '2px', width: '100%', overflow: 'hidden', wordBreak: 'break-word',
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'
+                      }}>{names.join(', ')}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      };
+
+      const sel = selected ? new Date(selected + 'T12:00:00') : null;
+      const selInfo = sel ? (getDay(sel) || {}) : null;
+      const selNames = selected ? getShiftPerformers(shiftData[selected]) : [];
+
+      return (
+        <div style={{paddingBottom: sel ? '150px' : '70px'}}>
+          {/* Sticky weekday row */}
+          <div style={{
+            position: 'sticky', top: '62px', zIndex: 20, display: 'grid',
+            gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', padding: '8px 0',
+            background: '#0a0a0f', borderBottom: '1px solid #2a2a3a', marginBottom: '12px'
+          }}>
+            {['S','M','T','W','T','F','S'].map((d, i) => (
+              <div key={i} style={{padding: '0 2px'}}>
+                <span style={{display: 'inline-block', minWidth: '16px', textAlign: 'center', fontSize: '11px', fontWeight: 600, color: '#888899'}}>{d}</span>
+              </div>
+            ))}
+          </div>
+
+          {months.map(renderMonth)}
+
+          {/* Floating bar: Today button + selected day */}
+          <div style={{position: 'fixed', left: '12px', right: '12px', bottom: '16px', zIndex: 30, maxWidth: '560px', margin: '0 auto'}}>
+            {sel && (
+              <div style={{...styles.card, padding: '14px 16px', marginBottom: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.6)'}}>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px'}}>
+                  <span style={{fontSize: '16px', fontWeight: 700}}>
+                    {sel.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                  </span>
+                  <span onClick={() => setSelected(null)} style={{color: '#888899', cursor: 'pointer', padding: '0 4px'}}>✕</span>
+                </div>
+                <div style={{fontSize: '14px', color: '#c4b5fd', marginBottom: '6px'}}>
+                  {selNames.length ? selNames.join(', ') : 'No performer listed'}
+                </div>
+                {selInfo.amount != null ? (
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{fontSize: '14px', color: '#888899'}}>{selInfo.start || '--'} – {selInfo.end || '--'}</span>
+                    <span style={{fontSize: '20px', fontWeight: 700, color: '#06ffa5'}}>${selInfo.amount.toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <div style={{fontSize: '14px', color: '#888899'}}>No tips for you this day</div>
+                )}
+              </div>
+            )}
+            <button
+              onClick={() => scrollToToday(true)}
+              style={{
+                padding: '10px 20px', borderRadius: '999px', border: '1px solid #2a2a3a',
+                background: 'rgba(26, 26, 37, 0.95)', color: '#fff', fontSize: '15px', fontWeight: 600,
+                cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.5)'
+              }}
+            >Today</button>
+          </div>
         </div>
       );
     }
@@ -3532,10 +3688,25 @@
           </header>
           
           <div style={{...styles.content, ...(isMobile ? { padding: '16px 12px' } : {})}}>
-            <DashboardTabs tab={tab} setTab={setTab} />
+            <DashboardTabs tab={tab} setTab={setTab} showCalendar sticky={tab === 'calendar'} />
 
             {tab === 'performers' ? (
               <PerformersView shiftData={shiftData} employeeData={employeeData} />
+            ) : tab === 'calendar' ? (
+              <CalendarView
+                shiftData={shiftData}
+                getDay={(date) => {
+                  const key = dateKey(date);
+                  const raw = localData[key] || {};
+                  const dd = raw.savedAt ? raw : {};
+                  const r = calculateDayTip(date);
+                  return {
+                    amount: r ? r.myTip : null,
+                    start: dd.startTimeOverride || (dd.startTime === '10' ? '10 PM' : dd.startTime === '12' ? '12 AM' : ''),
+                    end: dd.endTimeOverride || shiftData[key]?.endTime || ''
+                  };
+                }}
+              />
             ) : (<>
             <div style={styles.periodCard}>
               <div style={styles.periodNav}>
