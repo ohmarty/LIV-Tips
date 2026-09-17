@@ -1052,8 +1052,8 @@
       },
       tableRowMobile: {
         display: 'grid',
-        gridTemplateColumns: '42px minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.3fr) 60px',
-        gap: '4px',
+        gridTemplateColumns: '50px minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.3fr) 60px',
+        gap: '6px',
         padding: '10px 6px',
         borderBottom: '1px solid #2a2a3a',
         alignItems: 'center',
@@ -1089,8 +1089,8 @@
       },
       tableHeaderMobile: {
         display: 'grid',
-        gridTemplateColumns: '42px minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.3fr) 60px',
-        gap: '4px',
+        gridTemplateColumns: '50px minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.3fr) 60px',
+        gap: '6px',
         padding: '12px 6px',
         background: '#1a1a25',
         fontSize: '10px',
@@ -3605,16 +3605,15 @@
 
                     {!hasShiftData ? (
                       <>
-                        <div style={{gridColumn: '2 / 4', display: 'flex', justifyContent: 'center', minWidth: 0}}>
+                        <div style={{gridColumn: '2 / 5', display: 'flex', justifyContent: 'center', minWidth: 0}}>
                           <button
                             onClick={() => openAddShiftModal(date)}
-                            style={{...styles.addShiftBtn, ...(isMobile ? { padding: '8px 10px', fontSize: '12px', whiteSpace: 'nowrap' } : {})}}
+                            style={{...styles.addShiftBtn, ...(isMobile ? { padding: '8px 14px', fontSize: '12px', whiteSpace: 'nowrap' } : {})}}
                           >
                             Add Shift
                           </button>
                         </div>
-                        <PerformerCell names={nightPerformers} />
-                        <span style={styles.colTip}><span style={styles.tipEmpty}></span></span>
+                        <span style={styles.colTip}></span>
                       </>
                     ) : (
                       <>
