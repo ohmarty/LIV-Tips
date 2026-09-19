@@ -3618,7 +3618,22 @@
       // Use employeeData directly instead of local state
       const localData = employeeData[user.username] || {};
 
-      const [tab, setTab] = useState('tips'); // 'tips' | 'performers'
+      const [tab, setTab] = useState('tips'); // 'tips' | 'calendar' | 'performers'
+      const headerRef = React.useRef(null);
+      const [headerH, setHeaderH] = useState(0);
+
+      // Switching tabs starts at the top (the calendar scrolls itself to today)
+      useEffect(() => {
+        if (tab !== 'calendar') window.scrollTo(0, 0);
+      }, [tab]);
+
+      // Keep the banner height up to date so the pinned rows line up under it
+      useEffect(() => {
+        const measure = () => setHeaderH(headerRef.current ? headerRef.current.offsetHeight : 0);
+        measure();
+        window.addEventListener('resize', measure);
+        return () => window.removeEventListener('resize', measure);
+      }, [tab]);
 
       // Add Shift Modal state
       const [showAddShiftModal, setShowAddShiftModal] = useState(false);
@@ -3917,21 +3932,25 @@
 
       return (
         <div style={styles.container}>
-          <header style={styles.header}>
+          <header
+            ref={headerRef}
+            style={{...styles.header, ...(tab === 'calendar' ? { position: 'sticky', top: 0, zIndex: 60 } : {})}}
+          >
             <div>
               <h1 style={styles.headerTitle}>LIV Tips</h1>
               <p style={styles.headerSubtitle}>Welcome, {user.username}</p>
             </div>
             <button onClick={onLogout} style={styles.logoutBtn}>Logout</button>
           </header>
-          
+
           <div style={{...styles.content, ...(isMobile ? { padding: '16px 12px' } : {})}}>
-            <DashboardTabs tab={tab} setTab={setTab} showCalendar sticky={tab === 'calendar'} />
+            <DashboardTabs tab={tab} setTab={setTab} showCalendar sticky={tab === 'calendar'} stickyTop={headerH} />
 
             {tab === 'performers' ? (
               <PerformersView shiftData={shiftData} employeeData={employeeData} />
             ) : tab === 'calendar' ? (
               <CalendarView
+                stickyTop={headerH}
                 shiftData={shiftData}
                 getDay={(date) => {
                   const key = dateKey(date);
