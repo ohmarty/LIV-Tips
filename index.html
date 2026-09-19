@@ -95,7 +95,7 @@
   
   <!-- Firebase SDKs -->
   <script type="module">
-    window.APP_VERSION = 1789818846614; // Auto-replaced by Netlify build on every deploy
+    window.APP_VERSION = 1787239040228; // Auto-replaced by Netlify build on every deploy
     console.log('🚀 LIV Tips v' + window.APP_VERSION + ' loaded at', new Date().toISOString());
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getFirestore, doc, getDoc, getDocFromServer, setDoc, deleteField, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -508,6 +508,16 @@
         s.nights.sort((a, b) => b.key.localeCompare(a.key));
       });
       return stats;
+    }
+
+    // Banquet money for one busser on one night. Paid separately by the manager —
+    // it is never part of the tip pool math, just shown alongside it.
+    function getBanquetAmount(shift, username) {
+      if (!shift || !shift.hasBanquet) return 0;
+      const amount = parseFloat(shift.banquetAmount) || 0;
+      if (!amount) return 0;
+      const workers = shift.banquetEmployees || [];
+      return workers.includes(username) ? amount : 0;
     }
 
     // Short label for a table cell: "Name" or "Name +2"
@@ -1378,6 +1388,31 @@
 
     // Login Component
 
+
+    // Collapsible section for the admin form. Shows a badge when it has something,
+    // so you can see what's set without opening it.
+    function AdminSection({ title, badge, children, defaultOpen }) {
+      const [open, setOpen] = useState(!!defaultOpen);
+      return (
+        <div style={{border: '1px solid #2a2a3a', borderRadius: '12px', marginBottom: '14px', overflow: 'hidden'}}>
+          <div
+            onClick={() => setOpen(!open)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 16px', cursor: 'pointer', background: '#12121a'
+            }}
+          >
+            <span style={{fontSize: '15px', fontWeight: 600}}>{title}</span>
+            <span style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+              {badge && <span style={{fontSize: '12px', color: '#ffc857', fontWeight: 600}}>{badge}</span>}
+              <span style={{color: '#888899', fontSize: '14px'}}>{open ? '▲' : '▼'}</span>
+            </span>
+          </div>
+          {open && <div style={{padding: '16px'}}>{children}</div>}
+        </div>
+      );
+    }
+
     // Admin: rename, merge, or remove a performer across every night
     function PerformerManager({ shiftData, setShiftData }) {
       const [selected, setSelected] = useState('');
@@ -1576,7 +1611,7 @@
     }
 
     // "My Tips | Performers" switch used on busser + supervisor dashboards
-    function DashboardTabs({ tab, setTab, showCalendar, sticky }) {
+    function DashboardTabs({ tab, setTab, showCalendar, sticky, stickyTop }) {
       const btn = (id, label) => (
         <button
           onClick={() => setTab(id)}
@@ -1592,7 +1627,7 @@
         <div style={{
           display: 'flex', gap: '4px', padding: '4px', marginBottom: '16px',
           background: '#12121a', border: '1px solid #2a2a3a', borderRadius: '14px',
-          ...(sticky ? { position: 'sticky', top: '8px', zIndex: 40, boxShadow: '0 -8px 0 8px #0a0a0f' } : {})
+          ...(sticky ? { position: 'sticky', top: `${(stickyTop || 0) + 8}px`, zIndex: 40, boxShadow: '0 -8px 0 8px #0a0a0f' } : {})
         }}>
           {btn('tips', 'My Tips')}
           {showCalendar && btn('calendar', 'Calendar')}
@@ -1728,7 +1763,7 @@
 
     // Month calendar — months stacked, scroll up/down (like Apple Calendar).
     // getDay(date) -> { amount: number|null, start, end } for this user.
-    function CalendarView({ shiftData, getDay }) {
+    function CalendarView({ shiftData, getDay, stickyTop }) {
       const today = new Date();
       const currentRef = React.useRef(null);
       const [selected, setSelected] = useState(null);
@@ -1744,7 +1779,7 @@
       const scrollToToday = (smooth) => {
         const el = currentRef.current;
         if (!el) return;
-        const y = el.getBoundingClientRect().top + window.scrollY - 110;
+        const y = el.getBoundingClientRect().top + window.scrollY - ((stickyTop || 0) + 110);
         window.scrollTo({ top: y, behavior: smooth ? 'smooth' : 'auto' });
       };
       useEffect(() => { scrollToToday(false); }, []);
@@ -1755,11 +1790,14 @@
         const dim = new Date(y, mo + 1, 0).getDate();
         const cells = [];
         for (let i = 0; i < startDow; i++) cells.push(null);
-        let total = 0;
+        let total = 0, banquetTotal = 0;
         for (let i = 1; i <= dim; i++) {
           const date = new Date(y, mo, i, 12);
           const info = getDay(date) || {};
-          if (info.amount != null) total += info.amount;
+          if (info.amount != null) {
+            total += info.amount;
+            banquetTotal += info.banquet || 0;
+          }
           cells.push({ date, info });
         }
 
@@ -1770,8 +1808,15 @@
                 {m.toLocaleDateString('en-US', { month: 'long' })}
                 {y !== today.getFullYear() && <span style={{color: '#888899', fontWeight: 500}}> {y}</span>}
               </span>
-              <span style={{fontSize: '15px', fontWeight: 700, color: total > 0 ? '#06ffa5' : '#555566'}}>
-                ${total.toFixed(2)}
+              <span style={{textAlign: 'right'}}>
+                <span style={{display: 'block', fontSize: '15px', fontWeight: 700, color: total > 0 ? '#06ffa5' : '#555566'}}>
+                  ${total.toFixed(2)}
+                </span>
+                {banquetTotal > 0 && (
+                  <span style={{display: 'block', fontSize: '12px', fontWeight: 700, color: '#ffc857'}}>
+                    B: ${banquetTotal.toFixed(2)}
+                  </span>
+                )}
               </span>
             </div>
             <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))'}}>
@@ -1807,6 +1852,11 @@
                         ${Math.round(info.amount)}
                       </span>
                     )}
+                    {worked && info.banquet > 0 && (
+                      <span style={{fontSize: '10px', fontWeight: 700, color: '#ffc857', whiteSpace: 'nowrap'}}>
+                        B: ${Math.round(info.banquet)}
+                      </span>
+                    )}
                     {names.length > 0 && (
                       <span style={{
                         fontSize: '9px', lineHeight: '11px', color: '#c4b5fd', textAlign: 'center',
@@ -1830,7 +1880,7 @@
         <div style={{paddingBottom: sel ? '150px' : '70px'}}>
           {/* Sticky weekday row */}
           <div style={{
-            position: 'sticky', top: '62px', zIndex: 20, display: 'grid',
+            position: 'sticky', top: `${(stickyTop || 0) + 62}px`, zIndex: 20, display: 'grid',
             gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', padding: '8px 0',
             background: '#0a0a0f', borderBottom: '1px solid #2a2a3a', marginBottom: '12px'
           }}>
@@ -1857,10 +1907,18 @@
                   {selNames.length ? selNames.join(', ') : 'No performer listed'}
                 </div>
                 {selInfo.amount != null ? (
+                  <>
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                     <span style={{fontSize: '14px', color: '#888899'}}>{selInfo.start || '--'} – {selInfo.end || '--'}</span>
                     <span style={{fontSize: '20px', fontWeight: 700, color: '#06ffa5'}}>${selInfo.amount.toFixed(2)}</span>
                   </div>
+                  {selInfo.banquet > 0 && (
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px'}}>
+                      <span style={{fontSize: '14px', color: '#888899'}}>Banquet</span>
+                      <span style={{fontSize: '16px', fontWeight: 700, color: '#ffc857'}}>${selInfo.banquet.toFixed(2)}</span>
+                    </div>
+                  )}
+                  </>
                 ) : (
                   <div style={{fontSize: '14px', color: '#888899'}}>No tips for you this day</div>
                 )}
@@ -2001,6 +2059,7 @@
       // Banquet tracking
       const [hasBanquet, setHasBanquet] = useState(false);
       const [banquetEmployees, setBanquetEmployees] = useState([]);
+      const [banquetAmount, setBanquetAmount] = useState('');
       const [banquetInHour, setBanquetInHour] = useState('');
       const [banquetInMin, setBanquetInMin] = useState('00');
       const [banquetInPeriod, setBanquetInPeriod] = useState('PM');
@@ -2064,6 +2123,7 @@
           // Load banquet data
           setHasBanquet(existing.hasBanquet || false);
           setBanquetEmployees(existing.banquetEmployees || []);
+          setBanquetAmount(existing.banquetAmount != null ? String(existing.banquetAmount) : '');
           if (existing.banquetInTime) {
             const banquetMatch = existing.banquetInTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
             if (banquetMatch) {
@@ -2089,6 +2149,7 @@
           setBussers12Count('');
           setHasBanquet(false);
           setBanquetEmployees([]);
+          setBanquetAmount('');
           setBanquetInHour('');
           setBanquetInMin('00');
           setBanquetInPeriod('PM');
@@ -2129,6 +2190,8 @@
             hasBanquet: hasBanquet,
             banquetEmployees: hasBanquet ? banquetEmployees : [],
             banquetInTime: hasBanquet ? fullBanquetInTime : '',
+            // Paid separately by the manager — never used in any tip calculation
+            banquetAmount: hasBanquet ? (parseFloat(banquetAmount) || 0) : 0,
             supervisorsWorked: supervisorsWorked,
             extraBussers: extraBussers,
             // Rebuilt from the form like every other field, so it must be included
@@ -2575,6 +2638,180 @@
         };
       })();
 
+      // Render the Banquet page
+      const renderBanquetPage = () => (
+        <div style={styles.content}>
+          <div style={styles.card}>
+            <h2 style={styles.cardTitle}>Banquet</h2>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Date</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={styles.input}
+              />
+              <p style={{...styles.hint, marginTop: '6px'}}>
+                Same night as the Shift tab. Banquet money is separate from tips and is never part of any calculation.
+              </p>
+            </div>
+
+          <div style={{marginBottom: '16px'}}>
+            <label style={{...styles.label, display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer'}}>
+              <span>Was there a banquet?</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setHasBanquet(!hasBanquet);
+                  if (hasBanquet) {
+                    setBanquetEmployees([]);
+                    setBanquetAmount('');
+                    setBanquetInHour('');
+                    setBanquetInMin('00');
+                    setBanquetInPeriod('PM');
+                  }
+                }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: hasBanquet ? '#22c55e' : 'rgba(255,255,255,0.1)',
+                  color: hasBanquet ? '#fff' : '#888899',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {hasBanquet ? 'Yes' : 'No'}
+              </button>
+            </label>
+          </div>
+
+          {hasBanquet && (
+            <div style={{background: 'rgba(34, 197, 94, 0.1)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.3)'}}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Banquet Tip-Out ($ per worker)</label>
+                <input
+                  type="number"
+                  value={banquetAmount}
+                  onChange={(e) => setBanquetAmount(e.target.value)}
+                  style={{...styles.input, width: '100%'}}
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                />
+                <p style={{...styles.hint, marginTop: '6px'}}>
+                  Separate money from the manager. Not used in any tip math.
+                </p>
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Banquet IN Time (same for all)</label>
+                <div style={styles.timeInputGroup}>
+                  <input
+                    type="number"
+                    value={banquetInHour}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setBanquetInHour('');
+                      } else {
+                        const num = parseInt(val);
+                        if (num >= 1 && num <= 12) {
+                          setBanquetInHour(val);
+                        }
+                      }
+                    }}
+                    style={{...styles.input, flex: 1, textAlign: 'center'}}
+                    placeholder="Hr"
+                    min="1"
+                    max="12"
+                  />
+                  <span style={{color: '#888899', fontSize: '24px', alignSelf: 'center'}}>:</span>
+                  <input
+                    type="number"
+                    value={banquetInMin}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setBanquetInMin('');
+                      } else {
+                        const num = parseInt(val);
+                        if (num >= 0 && num <= 59) {
+                          setBanquetInMin(val);
+                        }
+                      }
+                    }}
+                    style={{...styles.input, flex: 1, textAlign: 'center'}}
+                    placeholder="Min"
+                    min="0"
+                    max="59"
+                  />
+                  <select
+                    value={banquetInPeriod}
+                    onChange={(e) => setBanquetInPeriod(e.target.value)}
+                    style={{...styles.select, width: '80px'}}
+                  >
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Select Banquet Workers ({banquetEmployees.length} selected)</label>
+                <div style={{maxHeight: '200px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px'}}>
+                  {employeeList.filter(emp => !SUPERVISOR_IDS.includes(emp.id)).map(emp => (
+                    <label
+                      key={emp.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        background: banquetEmployees.includes(emp.name) ? 'rgba(34, 197, 94, 0.2)' : 'transparent'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={banquetEmployees.includes(emp.name)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setBanquetEmployees([...banquetEmployees, emp.name]);
+                          } else {
+                            setBanquetEmployees(banquetEmployees.filter(n => n !== emp.name));
+                          }
+                        }}
+                        style={{width: '18px', height: '18px'}}
+                      />
+                      <span style={{color: '#fff'}}>{emp.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+            <div style={{position: 'relative', display: 'flex', alignItems: 'center', marginTop: '20px'}}>
+              <button onClick={handleSave} style={styles.primaryBtn}>
+                Save Banquet
+              </button>
+              {showSaveCheck && (
+                <span style={{...styles.saveConfirmation}}>✓ Saved</span>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+
+      // How many people were cut early on the selected night (for the section badge)
+      const cutCount = Object.values(employeeData).filter(
+        emp => emp && emp[selectedDate] && emp[selectedDate].endTimeOverride
+      ).length;
+
       // Render the Shift Data page
       const renderShiftDataPage = () => (
         <div style={styles.content}>
@@ -2688,132 +2925,6 @@
                 </div>
               </div>
 
-              <div style={styles.divider} />
-
-              {/* Banquet Section */}
-              <h3 style={styles.subTitle}>Banquet</h3>
-
-              <div style={{marginBottom: '16px'}}>
-                <label style={{...styles.label, display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer'}}>
-                  <span>Was there a banquet?</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHasBanquet(!hasBanquet);
-                      if (hasBanquet) {
-                        setBanquetEmployees([]);
-                        setBanquetInHour('');
-                        setBanquetInMin('00');
-                        setBanquetInPeriod('PM');
-                      }
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: hasBanquet ? '#22c55e' : 'rgba(255,255,255,0.1)',
-                      color: hasBanquet ? '#fff' : '#888899',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {hasBanquet ? 'Yes' : 'No'}
-                  </button>
-                </label>
-              </div>
-
-              {hasBanquet && (
-                <div style={{background: 'rgba(34, 197, 94, 0.1)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.3)'}}>
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Banquet IN Time (same for all)</label>
-                    <div style={styles.timeInputGroup}>
-                      <input
-                        type="number"
-                        value={banquetInHour}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '') {
-                            setBanquetInHour('');
-                          } else {
-                            const num = parseInt(val);
-                            if (num >= 1 && num <= 12) {
-                              setBanquetInHour(val);
-                            }
-                          }
-                        }}
-                        style={{...styles.input, flex: 1, textAlign: 'center'}}
-                        placeholder="Hr"
-                        min="1"
-                        max="12"
-                      />
-                      <span style={{color: '#888899', fontSize: '24px', alignSelf: 'center'}}>:</span>
-                      <input
-                        type="number"
-                        value={banquetInMin}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '') {
-                            setBanquetInMin('');
-                          } else {
-                            const num = parseInt(val);
-                            if (num >= 0 && num <= 59) {
-                              setBanquetInMin(val);
-                            }
-                          }
-                        }}
-                        style={{...styles.input, flex: 1, textAlign: 'center'}}
-                        placeholder="Min"
-                        min="0"
-                        max="59"
-                      />
-                      <select
-                        value={banquetInPeriod}
-                        onChange={(e) => setBanquetInPeriod(e.target.value)}
-                        style={{...styles.select, width: '80px'}}
-                      >
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Select Banquet Workers ({banquetEmployees.length} selected)</label>
-                    <div style={{maxHeight: '200px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px'}}>
-                      {employeeList.filter(emp => !SUPERVISOR_IDS.includes(emp.id)).map(emp => (
-                        <label
-                          key={emp.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '8px',
-                            cursor: 'pointer',
-                            borderRadius: '4px',
-                            background: banquetEmployees.includes(emp.name) ? 'rgba(34, 197, 94, 0.2)' : 'transparent'
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={banquetEmployees.includes(emp.name)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setBanquetEmployees([...banquetEmployees, emp.name]);
-                              } else {
-                                setBanquetEmployees(banquetEmployees.filter(n => n !== emp.name));
-                              }
-                            }}
-                            style={{width: '18px', height: '18px'}}
-                          />
-                          <span style={{color: '#fff'}}>{emp.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
               {preview && (
                 <div style={styles.preview}>
                   <div style={styles.previewItem}>
@@ -2870,8 +2981,13 @@
                 })}
               </div>
 
+              <AdminSection
+                title="Extra Bussers"
+                badge={extraBussers.length ? `${extraBussers.length} added` : ''}
+                defaultOpen={extraBussers.length > 0}
+              >
               <div style={styles.inputGroup}>
-                <label style={styles.label}>Extra Bussers — different in-time ({extraBussers.length})</label>
+                <label style={styles.label}>Different in-time ({extraBussers.length})</label>
                 <p style={{...styles.hint, marginBottom: '10px'}}>
                   Bussers scheduled outside 10 PM / 12 AM. Their hours ADD to the pool — do not include them in the counts above.
                 </p>
@@ -2946,24 +3062,15 @@
                   </button>
                 </div>
               </div>
-
-              <div style={{position: 'relative', display: 'flex', alignItems: 'center'}}>
-                <button onClick={handleSave} style={styles.primaryBtn}>
-                  Save Shift Data
-                </button>
-                {showSaveCheck && (
-                  <span style={{
-                    ...styles.saveConfirmation,
-                    ...(showSaveCheck ? {} : styles.saveConfirmationFade)
-                  }}>
-                    ✓ Saved
-                  </span>
-                )}
-              </div>
+              </AdminSection>
             </div>
 
             <div style={styles.card}>
-              <h2 style={styles.cardTitle}>Early Departure</h2>
+              <AdminSection
+                title="Early Departure"
+                badge={cutCount ? `${cutCount} cut` : ''}
+                defaultOpen={cutCount > 0}
+              >
               <p style={{...styles.subTitle, marginBottom: '20px'}}>
                 Did someone leave early tonight?
               </p>
@@ -3083,6 +3190,7 @@
                   )}
                 </>
               )}
+              </AdminSection>
             </div>
 
             {/* Show who has early departures */}
@@ -3250,12 +3358,32 @@
                 </div>
               </div>
             )}
+
+
+            {/* Pinned save bar */}
+            <div style={{
+              position: 'sticky', bottom: 0, zIndex: 50, margin: '0 -12px -16px',
+              padding: '12px', background: 'rgba(10, 10, 15, 0.96)', borderTop: '1px solid #2a2a3a',
+              display: 'flex', alignItems: 'center', gap: '12px'
+            }}>
+              {preview && (
+                <span style={{fontSize: '13px', color: '#888899', whiteSpace: 'nowrap'}}>
+                  <span style={{display: 'block', fontSize: '16px', fontWeight: 700, color: '#06ffa5'}}>
+                    ${preview.perHour.toFixed(2)}/hr
+                  </span>
+                  pool ${preview.tipPool.toFixed(0)}
+                </span>
+              )}
+              <button onClick={handleSave} style={{...styles.primaryBtn, flex: 1, margin: 0}}>
+                {showSaveCheck ? '✓ Saved' : 'Save Shift Data'}
+              </button>
+            </div>
           </div>
         );
 
       // Render the Recent Entries page
       const renderRecentEntriesPage = () => (
-        <div style={styles.content}>
+        <>
           <div style={styles.card}>
             <h2 style={styles.cardTitle}>Recent Entries</h2>
               <div style={styles.entriesList}>
@@ -3299,13 +3427,13 @@
               </div>
             </div>
 
-            <PerformerManager shiftData={shiftData} setShiftData={setShiftData} />
-          </div>
+          </>
         );
 
       // Render the Employee Management page
       const renderEmployeeManagementPage = () => (
         <div style={styles.content}>
+          <PerformerManager shiftData={shiftData} setShiftData={setShiftData} />
           <div style={styles.card}>
             <h2 style={styles.cardTitle}>Employee Management</h2>
               <p style={{...styles.subTitle, marginBottom: '20px'}}>
@@ -3388,106 +3516,84 @@
       const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
       return (
-        <div style={{...styles.container, ...styles.adminLayout}}>
-          {/* Desktop Sidebar Navigation - Hidden on mobile */}
-          {!isMobile && (
-            <div style={styles.sidebarDesktop}>
-              <div style={styles.sidebarHeader}>
-                <h1 style={styles.sidebarTitle}>Admin Panel</h1>
-              </div>
-
-              <nav style={styles.nav}>
-                <div
-                  onClick={() => setCurrentPage('shift-data')}
-                  style={{
-                    ...styles.navItem,
-                    ...(currentPage === 'shift-data' ? styles.navItemActive : {})
-                  }}
-                >
-                  Enter Shift Data
-                </div>
-                <div
-                  onClick={() => setCurrentPage('recent-entries')}
-                  style={{
-                    ...styles.navItem,
-                    ...(currentPage === 'recent-entries' ? styles.navItemActive : {})
-                  }}
-                >
-                  Recent Entries
-                </div>
-                <div
-                  onClick={() => setCurrentPage('employee-management')}
-                  style={{
-                    ...styles.navItem,
-                    ...(currentPage === 'employee-management' ? styles.navItemActive : {})
-                  }}
-                >
-                  Employee Management
-                </div>
-              </nav>
-
-              <div style={styles.sidebarFooter}>
-                <button onClick={onLogout} style={{...styles.logoutBtn, width: '100%'}}>
-                  Logout
-                </button>
-              </div>
+        <div style={styles.container}>
+          <header style={{...styles.header, position: 'sticky', top: 0, zIndex: 60}}>
+            <div>
+              <h1 style={styles.headerTitle}>LIV Tips</h1>
+              <p style={styles.headerSubtitle}>Admin</p>
             </div>
-          )}
+            <button onClick={onLogout} style={styles.logoutBtn}>Logout</button>
+          </header>
 
-          {/* Main Content */}
-          <div style={styles.mainContent}>
-            <header style={styles.header}>
-              <h1 style={styles.headerTitle}>
-                {currentPage === 'shift-data' && 'Enter Shift Data'}
-                {currentPage === 'recent-entries' && 'Recent Entries'}
-                {currentPage === 'employee-management' && 'Employee Management'}
-              </h1>
-              {isMobile && (
-                <button onClick={onLogout} style={styles.logoutBtn}>
-                  Logout
-                </button>
-              )}
-            </header>
-
-            <div style={styles.scrollableContent}>
-              {currentPage === 'shift-data' && renderShiftDataPage()}
-              {currentPage === 'recent-entries' && renderRecentEntriesPage()}
-              {currentPage === 'employee-management' && renderEmployeeManagementPage()}
+          <div style={{...styles.content, ...(isMobile ? { padding: '16px 12px' } : {})}}>
+            <div style={{
+              display: 'flex', gap: '4px', padding: '4px', marginBottom: '16px',
+              background: '#12121a', border: '1px solid #2a2a3a', borderRadius: '14px'
+            }}>
+              {[['shift-data', 'SHIFT'], ['banquet', 'BANQUET'], ['employee-management', 'EMPLOYEES']].map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => { setCurrentPage(id); window.scrollTo(0, 0); }}
+                  style={{
+                    flex: 1, padding: '10px 4px', fontSize: '13px', fontWeight: 700, letterSpacing: '0.5px',
+                    border: 'none', borderRadius: '10px', cursor: 'pointer',
+                    background: currentPage === id ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'transparent',
+                    color: currentPage === id ? '#fff' : '#888899'
+                  }}
+                >{label}</button>
+              ))}
             </div>
+
+            {currentPage === 'shift-data' && renderShiftDataPage()}
+            {currentPage === 'banquet' && renderBanquetPage()}
+            {currentPage === 'employee-management' && renderEmployeeManagementPage()}
           </div>
+        </div>
+      );
+    }
 
-          {/* Mobile Bottom Navigation */}
-          {isMobile && (
-            <nav style={styles.mobileNav}>
-              <div
-                onClick={() => setCurrentPage('shift-data')}
-                style={{
-                  ...styles.mobileNavItem,
-                  ...(currentPage === 'shift-data' ? styles.mobileNavItemActive : {})
-                }}
-              >
-                Shift Data
+    // Admin Login Modal
+    function AdminLogin({ onSuccess, onCancel }) {
+      const [password, setPassword] = useState('');
+      const [error, setError] = useState('');
+      const ADMIN_PASSWORD = 'admin123'; // Change this!
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (password === ADMIN_PASSWORD) {
+          onSuccess();
+        } else {
+          setError('Invalid admin password');
+        }
+      };
+
+      return (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <h2 style={styles.modalTitle}>Admin Access</h2>
+            <form onSubmit={handleSubmit}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Admin Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={styles.input}
+                  placeholder="Enter admin password"
+                  autoFocus
+                />
               </div>
-              <div
-                onClick={() => setCurrentPage('recent-entries')}
-                style={{
-                  ...styles.mobileNavItem,
-                  ...(currentPage === 'recent-entries' ? styles.mobileNavItemActive : {})
-                }}
-              >
-                Recent
+              {error && <p style={styles.error}>{error}</p>}
+              <div style={styles.modalButtons}>
+                <button type="button" onClick={onCancel} style={{...styles.secondaryBtn, flex: 1}}>
+                  Cancel
+                </button>
+                <button type="submit" style={{...styles.primaryBtn, flex: 1}}>
+                  Access
+                </button>
               </div>
-              <div
-                onClick={() => setCurrentPage('employee-management')}
-                style={{
-                  ...styles.mobileNavItem,
-                  ...(currentPage === 'employee-management' ? styles.mobileNavItemActive : {})
-                }}
-              >
-                Employees
-              </div>
-            </nav>
-          )}
+            </form>
+          </div>
         </div>
       );
     }
@@ -3804,9 +3910,10 @@
         if (result) {
           acc.hours += result.myHours;
           acc.tips += result.myTip;
+          acc.banquet += getBanquetAmount(shiftData[dateKey(date)], user.username);
         }
         return acc;
-      }, { hours: 0, tips: 0 });
+      }, { hours: 0, tips: 0, banquet: 0 });
 
       return (
         <div style={styles.container}>
@@ -3833,6 +3940,7 @@
                   const r = calculateDayTip(date);
                   return {
                     amount: r ? r.myTip : null,
+                    banquet: getBanquetAmount(shiftData[key], user.username),
                     start: dd.startTimeOverride || (dd.startTime === '10' ? '10 PM' : dd.startTime === '12' ? '12 AM' : ''),
                     end: dd.endTimeOverride || shiftData[key]?.endTime || ''
                   };
@@ -3895,6 +4003,7 @@
 
                 const hasShiftData = dayData.startTime || dayData.startTimeOverride;
                 const nightPerformers = getShiftPerformers(shift);
+                const nightBanquet = getBanquetAmount(shift, user.username);
 
                 return (
                   <div key={key} style={{...(isMobile ? styles.tableRowMobile : styles.tableRow), ...(isToday ? styles.tableRowToday : {})}}>
@@ -3935,7 +4044,14 @@
 
                         <span style={styles.colTip}>
                           {result ? (
+                            <>
                             <span style={{...styles.tipAmount, ...(isMobile ? { fontSize: '13px' } : {})}}>${result.myTip.toFixed(2)}</span>
+                            {nightBanquet > 0 && (
+                              <span style={{display: 'block', fontSize: '11px', fontWeight: 700, color: '#ffc857', whiteSpace: 'nowrap'}}>
+                                B: ${Math.round(nightBanquet)}
+                              </span>
+                            )}
+                            </>
                           ) : (
                             <span style={styles.tipEmpty}>--</span>
                           )}
@@ -3957,6 +4073,15 @@
                 <span style={styles.totalLabel}>Total Tips</span>
                 <span style={styles.totalValueHighlight}>${totals.tips.toFixed(2)}</span>
               </div>
+              {totals.banquet > 0 && (
+                <>
+                  <div style={styles.totalDivider} />
+                  <div style={styles.totalItem}>
+                    <span style={styles.totalLabel}>Banquet</span>
+                    <span style={{...styles.totalValueHighlight, color: '#ffc857'}}>${totals.banquet.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
             </div>
             </>)}
 
@@ -4027,53 +4152,6 @@
         </div>
       );
     }
-
-    // Admin Login Modal
-    function AdminLogin({ onSuccess, onCancel }) {
-      const [password, setPassword] = useState('');
-      const [error, setError] = useState('');
-      const ADMIN_PASSWORD = 'admin123'; // Change this!
-
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        if (password === ADMIN_PASSWORD) {
-          onSuccess();
-        } else {
-          setError('Invalid admin password');
-        }
-      };
-
-      return (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <h2 style={styles.modalTitle}>Admin Access</h2>
-            <form onSubmit={handleSubmit}>
-              <div style={styles.inputGroup}>
-                <label style={styles.label}>Admin Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={styles.input}
-                  placeholder="Enter admin password"
-                  autoFocus
-                />
-              </div>
-              {error && <p style={styles.error}>{error}</p>}
-              <div style={styles.modalButtons}>
-                <button type="button" onClick={onCancel} style={{...styles.secondaryBtn, flex: 1}}>
-                  Cancel
-                </button>
-                <button type="submit" style={{...styles.primaryBtn, flex: 1}}>
-                  Access
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
     // ============================================
     // SUPERVISOR DASHBOARD
     // Read-only: supervisors enter nothing. Admin controls who worked and cuts.
@@ -4084,7 +4162,12 @@
       const [periodOffset, setPeriodOffset] = useState(0);
       const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-      const [tab, setTab] = useState('tips'); // 'tips' | 'performers'
+      const [tab, setTab] = useState('tips'); // 'tips' | 'calendar' | 'performers'
+
+      // Switching tabs starts at the top (the calendar scrolls itself to today)
+      useEffect(() => {
+        if (tab !== 'calendar') window.scrollTo(0, 0);
+      }, [tab]);
 
       // Times entry modal state — supervisor enters BOTH their in and out
       const [clockDate, setClockDate] = useState(null);
