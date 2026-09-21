@@ -510,6 +510,16 @@
       return stats;
     }
 
+    // Total Tips from the two numbers admin gets:
+    // (Service Charge × 0.25 × 0.72 × 0.83) + (Over Tip × 0.25 × 0.83)
+    // Only fills the Total Tips box — all other math uses Total Tips exactly as before.
+    function computeTotalTips(serviceCharge, overTip) {
+      const sc = parseFloat(serviceCharge) || 0;
+      const ot = parseFloat(overTip) || 0;
+      const total = (sc * 0.25 * 0.72 * 0.83) + (ot * 0.25 * 0.83);
+      return Math.round(total * 100) / 100;
+    }
+
     // Banquet money for one busser on one night. Paid separately by the manager —
     // it is never part of the tip pool math, just shown alongside it.
     function getBanquetAmount(shift, username) {
@@ -2049,6 +2059,17 @@
       const [currentPage, setCurrentPage] = useState('shift-data');
       const [selectedDate, setSelectedDate] = useState(dateKey(getBusinessDay()));
       const [totalTips, setTotalTips] = useState('');
+      const [serviceCharge, setServiceCharge] = useState('');
+      const [overTip, setOverTip] = useState('');
+
+      // Typing either number recalculates Total Tips
+      const updateTipInputs = (sc, ot) => {
+        setServiceCharge(sc);
+        setOverTip(ot);
+        if (sc !== '' || ot !== '') {
+          setTotalTips(String(computeTotalTips(sc, ot)));
+        }
+      };
       const [endTimeHour, setEndTimeHour] = useState('');
       const [endTimeMin, setEndTimeMin] = useState('00');
       const [endTimePeriod, setEndTimePeriod] = useState('AM');
@@ -2106,6 +2127,8 @@
         const existing = shiftData[selectedDate];
         if (existing) {
           setTotalTips(existing.totalTips?.toString() || '');
+          setServiceCharge(existing.serviceCharge != null ? String(existing.serviceCharge) : '');
+          setOverTip(existing.overTip != null ? String(existing.overTip) : '');
           if (existing.endTime) {
             const match = existing.endTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
             if (match) {
@@ -2142,6 +2165,8 @@
           setPerformers(getShiftPerformers(existing));
         } else {
           setTotalTips('');
+          setServiceCharge('');
+          setOverTip('');
           setEndTimeHour('');
           setEndTimeMin('00');
           setEndTimePeriod('AM');
@@ -2184,6 +2209,9 @@
           ...shiftData,
           [selectedDate]: {
             totalTips: parseFloat(totalTips) || 0,
+            // What admin typed, kept so the night can be reopened and checked
+            serviceCharge: serviceCharge !== '' ? (parseFloat(serviceCharge) || 0) : null,
+            overTip: overTip !== '' ? (parseFloat(overTip) || 0) : null,
             endTime: fullEndTime,
             bussers10Count: parseInt(bussers10Count) || 0,
             bussers12Count: parseInt(bussers12Count) || 0,
@@ -2828,16 +2856,47 @@
                 />
               </div>
               
+              <div style={{display: 'flex', gap: '10px', alignItems: 'flex-end'}}>
+                <div style={{...styles.inputGroup, flex: 1, minWidth: 0}}>
+                  <label style={styles.label}>Service Charge ($)</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={serviceCharge}
+                    onChange={(e) => updateTipInputs(e.target.value, overTip)}
+                    style={{...styles.input, width: '100%'}}
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+                <div style={{...styles.inputGroup, flex: 1, minWidth: 0}}>
+                  <label style={styles.label}>Over Tip ($)</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={overTip}
+                    onChange={(e) => updateTipInputs(serviceCharge, e.target.value)}
+                    style={{...styles.input, width: '100%'}}
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Total Tips ($)</label>
-                <input
-                  type="number"
-                  value={totalTips}
-                  onChange={(e) => setTotalTips(e.target.value)}
-                  style={styles.input}
-                  placeholder="0.00"
-                  step="0.01"
-                />
+                <div style={{
+                  ...styles.input, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: 'rgba(6, 255, 165, 0.08)', borderColor: 'rgba(6, 255, 165, 0.35)'
+                }}>
+                  <span style={{fontSize: '20px', fontWeight: 700, color: '#06ffa5'}}>
+                    ${(parseFloat(totalTips) || 0).toFixed(2)}
+                  </span>
+                  <span style={{fontSize: '11px', color: '#888899'}}>auto</span>
+                </div>
+                <p style={{...styles.hint, marginTop: '6px'}}>
+                  (Service Charge × 0.25 × 0.72 × 0.83) + (Over Tip × 0.25 × 0.83)
+                </p>
               </div>
               
               <div style={styles.inputGroup}>
