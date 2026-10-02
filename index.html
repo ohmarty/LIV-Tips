@@ -1804,10 +1804,8 @@
         for (let i = 1; i <= dim; i++) {
           const date = new Date(y, mo, i, 12);
           const info = getDay(date) || {};
-          if (info.amount != null) {
-            total += info.amount;
-            banquetTotal += info.banquet || 0;
-          }
+          if (info.amount != null) total += info.amount;
+          banquetTotal += info.banquet || 0;
           cells.push({ date, info });
         }
 
@@ -1834,9 +1832,11 @@
                 if (!c) return <div key={`e${i}`} />;
                 const { date, info } = c;
                 const key = dateKey(date);
-                const worked = info.amount != null;
+                const workedShift = info.amount != null;
+                // A banquet-only day still counts as worked (shows B: $xxx)
+                const worked = workedShift || (info.banquet || 0) > 0;
                 // Days the busser didn't work stay empty (no tip, no artist)
-                const names = worked ? getShiftPerformers(shiftData[key]) : [];
+                const names = workedShift ? getShiftPerformers(shiftData[key]) : [];
                 const isToday = dateKey(date) === dateKey(today);
                 const isSel = selected === key;
                 const weekend = date.getDay() === 0 || date.getDay() === 6;
@@ -1862,7 +1862,7 @@
                         ${Math.round(info.amount)}
                       </span>
                     )}
-                    {worked && info.banquet > 0 && (
+                    {info.banquet > 0 && (
                       <span style={{fontSize: '10px', fontWeight: 700, color: '#ffc857', whiteSpace: 'nowrap'}}>
                         B: ${Math.round(info.banquet)}
                       </span>
@@ -1929,6 +1929,11 @@
                     </div>
                   )}
                   </>
+                ) : selInfo.banquet > 0 ? (
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{fontSize: '14px', color: '#888899'}}>Banquet only</span>
+                    <span style={{fontSize: '20px', fontWeight: 700, color: '#ffc857'}}>${selInfo.banquet.toFixed(2)}</span>
+                  </div>
                 ) : (
                   <div style={{fontSize: '14px', color: '#888899'}}>No tips for you this day</div>
                 )}
@@ -3984,8 +3989,9 @@
         if (result) {
           acc.hours += result.myHours;
           acc.tips += result.myTip;
-          acc.banquet += getBanquetAmount(shiftData[dateKey(date)], user.username);
         }
+        // Banquet money counts even on banquet-only nights (no night shift)
+        acc.banquet += getBanquetAmount(shiftData[dateKey(date)], user.username);
         return acc;
       }, { hours: 0, tips: 0, banquet: 0 });
 
@@ -4082,6 +4088,8 @@
                 const hasShiftData = dayData.startTime || dayData.startTimeOverride;
                 const nightPerformers = getShiftPerformers(shift);
                 const nightBanquet = getBanquetAmount(shift, user.username);
+                // Banquet-only night: banquet worker, and no night tips entered for that date
+                const banquetOnly = nightBanquet > 0 && !(shift && parseFloat(shift.totalTips) > 0);
 
                 return (
                   <div key={key} style={{...(isMobile ? styles.tableRowMobile : styles.tableRow), ...(isToday ? styles.tableRowToday : {})}}>
@@ -4092,7 +4100,18 @@
                       </span>
                     </span>
 
-                    {!hasShiftData ? (
+                    {!hasShiftData && banquetOnly ? (
+                      <>
+                        <div style={{gridColumn: '2 / 5', display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0}}>
+                          <span style={{fontSize: '13px', fontWeight: 600, color: '#ffc857'}}>Banquet</span>
+                        </div>
+                        <span style={styles.colTip}>
+                          <span style={{display: 'block', fontSize: '11px', fontWeight: 700, color: '#ffc857', whiteSpace: 'nowrap'}}>
+                                B: ${Math.round(nightBanquet)}
+                              </span>
+                        </span>
+                      </>
+                    ) : !hasShiftData ? (
                       <>
                         <div style={{gridColumn: '2 / 5', display: 'flex', justifyContent: 'center', minWidth: 0}}>
                           <button
@@ -4102,7 +4121,13 @@
                             Add Shift
                           </button>
                         </div>
-                        <span style={styles.colTip}></span>
+                        <span style={styles.colTip}>
+                          {nightBanquet > 0 && (
+                            <span style={{display: 'block', fontSize: '11px', fontWeight: 700, color: '#ffc857', whiteSpace: 'nowrap'}}>
+                                B: ${Math.round(nightBanquet)}
+                              </span>
+                          )}
+                        </span>
                       </>
                     ) : (
                       <>
@@ -4130,6 +4155,10 @@
                               </span>
                             )}
                             </>
+                          ) : nightBanquet > 0 ? (
+                            <span style={{display: 'block', fontSize: '11px', fontWeight: 700, color: '#ffc857', whiteSpace: 'nowrap'}}>
+                                B: ${Math.round(nightBanquet)}
+                              </span>
                           ) : (
                             <span style={styles.tipEmpty}>--</span>
                           )}
