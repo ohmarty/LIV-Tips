@@ -352,7 +352,20 @@
           if (empDayData.startTime === '10') actualStart = '10:00 PM';
           else if (empDayData.startTime === '12') actualStart = '12:00 AM';
         }
-        if (!actualStart) return;
+        if (!actualStart) {
+          // Admin cut someone who never added their own shift. They're already in
+          // admin's 10/12 counts, so take the missed time (cut → close) off the pool.
+          // Once they add their shift, the normal 'cut early' path below handles them
+          // instead — so each person is only ever subtracted once.
+          if (hasCustomEnd && empDayData.adminSetEarlyDeparture) {
+            const missed = calculateHours(empDayData.endTimeOverride, shift.endTime);
+            if (missed > 0 && missed < 24) {
+              customHoursAdded -= missed;
+              adjustments.push({ name: empName, type: 'cut early (no shift added)', diff: (-missed).toFixed(2) });
+            }
+          }
+          return;
+        }
 
         const actualEnd = hasCustomEnd ? empDayData.endTimeOverride : shift.endTime;
         const actualHours = calculateHours(actualStart, actualEnd);
